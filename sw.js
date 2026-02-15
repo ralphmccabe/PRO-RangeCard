@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trc-pro-v4.0-RC1';
+const CACHE_NAME = 'apex-v1-rc1';
 const ASSETS = [
     './',
     './index.html',
