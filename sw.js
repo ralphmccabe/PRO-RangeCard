@@ -58,7 +58,8 @@ self.addEventListener('fetch', (event) => {
     const isCoreFile = url.origin === self.location.origin &&
         (url.pathname.endsWith('/') ||
             url.pathname.endsWith('index.html') ||
-            url.pathname.endsWith('script.js'));
+            url.pathname.endsWith('script.js') ||
+            url.pathname.endsWith('manifest.json'));
 
     if (isCoreFile) {
         event.respondWith(
