@@ -4202,6 +4202,7 @@ window.startScopeRecording = function () {
 };
 
 // --- SECURE TAPE ARCHIVE (IndexedDB) ---
+const TRC_VERSION = "v4.0 RC2";
 const TRC_Vault = {
     dbName: 'TRC_Data',
     storeName: 'tapes',
