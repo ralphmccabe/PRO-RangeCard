@@ -1,9 +1,9 @@
 {
-  "id": "apex-ballistics-v1",
+  "id": "apex-ops-global-v1",
   "name": "Apex Ballistics",
-  "short_name": "APEX",
+  "short_name": "ApexOpsGlobal",
   "description": "Precision Long Range Ballistics & Environment Logger",
-  "start_url": "./index.html?v=apex",
+  "start_url": "./index.html?v=apex_ops",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0f172a",
