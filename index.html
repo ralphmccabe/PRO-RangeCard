@@ -48,7 +48,7 @@
             console.log('Lucide loaded successfully v' + (lucide.version || 'unknown'));
         }
     </script>
-    <link rel="stylesheet" href="style.css?v=3.6">
+    <link rel="stylesheet" href="style.css?v=3.8">
     <style>
         :root {
             /* Core Theme Variables - Duplicated here for safety on mobile */
@@ -583,9 +583,10 @@
                     <section class="space-y-4">
 
                         <label class="section-label group flex items-center gap-2">
-                            3 SHOTS
+                            TARGET LIST
                         </label>
                         <div class="space-y-4">
+                            <!-- Existing T1-T3 -->
                             <div class="grid grid-cols-[2.5rem_1fr_1fr] items-center gap-2">
                                 <span class="text-[10px] font-bold text-gray-500 uppercase">T1:</span>
                                 <input type="text" id="shooting-angle" class="input-field"
@@ -1160,7 +1161,9 @@
                             </div>
 
                             <!-- Compass -->
-                            <div class="relative border border-black bg-gray-50/50 h-80 overflow-hidden">
+                            <div
+                                class="relative border-2 border-black bg-gray-50/50 h-80 overflow-hidden transition-all duration-500">
+
                                 <div class="absolute inset-0 flex items-center justify-center pointer-events-none z-0">
                                     <div
                                         class="w-32 h-32 border border-gray-200 rounded-full flex items-center justify-center">
@@ -1191,29 +1194,37 @@
                                     class="absolute top-1 left-1 z-30 pointer-events-none space-y-0.5 bg-white/40 p-1 rounded-sm">
                                     <div class="flex items-center gap-1 font-bold text-[8px]">
                                         <span>DIR:</span>
-                                        <div class="w-8 border-b border-black text-center min-h-[10px]">
+                                        <div
+                                            class="flex-1 max-w-[100px] border-b border-black text-center min-h-[10px] overflow-hidden whitespace-nowrap text-ellipsis">
                                             <span id="mobile-display-direction-notes" class="text-blue-800"></span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 font-bold text-[8px]">
                                         <span>T1 Shot:</span>
-                                        <div class="w-8 border-b border-black text-center min-h-[10px]">
+                                        <div
+                                            class="flex-1 max-w-[100px] border-b border-black text-center min-h-[10px] overflow-hidden whitespace-nowrap text-ellipsis">
                                             <span id="mobile-display-shooting-angle" class="text-blue-800"></span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 font-bold text-[8px]">
                                         <span>T2 Shot:</span>
-                                        <div class="w-8 border-b border-black text-center min-h-[10px]">
+                                        <div
+                                            class="flex-1 max-w-[100px] border-b border-black text-center min-h-[10px] overflow-hidden whitespace-nowrap text-ellipsis">
                                             <span id="mobile-display-shooting-angle-2" class="text-blue-800"></span>
                                         </div>
                                     </div>
                                     <div class="flex items-center gap-1 font-bold text-[8px]">
                                         <span>T3 Shot:</span>
-                                        <div class="w-8 border-b border-black text-center min-h-[10px]">
+                                        <div
+                                            class="flex-1 max-w-[100px] border-b border-black text-center min-h-[10px] overflow-hidden whitespace-nowrap text-ellipsis">
                                             <span id="mobile-display-shooting-angle-3" class="text-blue-800"></span>
                                         </div>
                                     </div>
+
+
                                 </div>
+
+
                             </div>
                         </div>
                     </div>
@@ -1385,6 +1396,7 @@
                                     class="border border-black rounded-full bg-white touch-none cursor-crosshair w-full h-auto max-w-[280px] mx-auto"></canvas>
                                 <div class="mt-1 text-[10px] font-bold">
                                     <span>H-NOTE:</span>
+
                                     <span id="display-hold-value"
                                         class="text-blue-800 font-normal font-handwriting"></span>
                                 </div>
@@ -1793,19 +1805,9 @@
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-blue-500 text-blue-500 transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="brain" class="w-3.5 h-3.5"></i> AI Advisor
                 </button>
-                <button onclick="switchIntelTab('session-history')" id="tab-session-history"
+                <button onclick="switchIntelTab('connectivity')" id="tab-connectivity"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
-                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Session History
-                </button>
-
-
-                <button onclick="switchIntelTab('ballistic-intel')" id="tab-ballistic-intel"
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
-                    <i data-lucide="target" class="w-3.5 h-3.5"></i> Ballistic Intel
-                </button>
-                <button onclick="switchIntelTab('work-center')" id="tab-work-center"
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
-                    <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> WORK CENTER
+                    <i data-lucide="signal" class="w-3.5 h-3.5"></i> CONNECTIVITY
                 </button>
                 <button onclick="switchIntelTab('weather-station')" id="tab-weather-station"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
@@ -1815,13 +1817,17 @@
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="compass" class="w-3.5 h-3.5"></i> TACTICAL COMPASS
                 </button>
-                <button onclick="switchIntelTab('connectivity')" id="tab-connectivity"
+                <button onclick="switchIntelTab('tactical-map')" id="tab-tactical-map"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
-                    <i data-lucide="signal" class="w-3.5 h-3.5"></i> CONNECTIVITY
+                    <i data-lucide="map" class="w-3.5 h-3.5"></i> TACTICAL MAP
                 </button>
-                <button onclick="switchIntelTab('scope-cam')" id="tab-scope-cam"
+                <button onclick="switchIntelTab('work-center')" id="tab-work-center"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
-                    <i data-lucide="camera" class="w-3.5 h-3.5"></i> SCOPE CAM
+                    <i data-lucide="layout-grid" class="w-3.5 h-3.5"></i> WORK CENTER
+                </button>
+                <button onclick="switchIntelTab('session-history')" id="tab-session-history"
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
+                    <i data-lucide="history" class="w-3.5 h-3.5"></i> Session History
                 </button>
                 <button onclick="switchIntelTab('target-cam')" id="tab-target-cam"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
@@ -1831,14 +1837,17 @@
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="archive" class="w-3.5 h-3.5"></i> INTEL VAULT
                 </button>
-
+                <button onclick="switchIntelTab('scope-cam')" id="tab-scope-cam"
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
+                    <i data-lucide="camera" class="w-3.5 h-3.5"></i> SCOPE CAM
+                </button>
                 <button onclick="switchIntelTab('field-tape')" id="tab-field-tape"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="film" class="w-3.5 h-3.5"></i> FIELD TAPE
                 </button>
-                <button onclick="switchIntelTab('tactical-map')" id="tab-tactical-map"
+                <button onclick="switchIntelTab('ballistic-intel')" id="tab-ballistic-intel"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
-                    <i data-lucide="map" class="w-3.5 h-3.5"></i> TACTICAL MAP
+                    <i data-lucide="target" class="w-3.5 h-3.5"></i> Ballistic Intel
                 </button>
                 <button onclick="switchIntelTab('gps-rangefinder')" id="tab-gps-rangefinder"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
@@ -2003,7 +2012,7 @@
                                     class="bg-transparent text-sm font-black text-blue-400 w-11 outline-none border-none focus:ring-0"
                                     placeholder="DA"
                                     oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
-                                <button onclick="window.syncOWCWeather()"
+                                <button onclick="window.syncOWCWeather(true)"
                                     class="px-1 py-1 bg-blue-600/20 border border-blue-500/30 rounded text-[7px] font-black text-blue-400 uppercase hover:bg-blue-600 hover:text-white transition-all shrink-0">SYNC</button>
                             </div>
 
@@ -2788,7 +2797,7 @@
                                 class="w-16 h-16 bg-zinc-900 rounded-full flex items-center justify-center border border-white/5">
                                 <i data-lucide="camera" class="w-8 h-8 text-blue-500 animate-pulse"></i>
                             </div>
-                            <h3 class="text-xs font-black text-neon-green tracking-[0.3em] uppercase mb-4">TRC PRO v3.7
+                            <h3 class="text-xs font-black text-neon-green tracking-[0.3em] uppercase mb-4">TRC PRO v3.8
                             </h3>
                             <button onclick="window.initScopeCam()"
                                 class="bg-blue-600 hover:bg-blue-500 text-white font-black px-8 py-4 rounded-lg text-[10px] uppercase tracking-widest shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all active:scale-95">
@@ -3092,22 +3101,22 @@
                 <div id="intel-session-history"
                     class="hidden h-full overflow-y-auto space-y-6 px-2 pb-24 custom-scrollbar">
                     <div
-                        class="flex gap-2 border-b border-gray-800 bg-black/20 p-1 rounded-lg overflow-x-auto no-scrollbar">
-                        <button id="subtab-ammo" onclick="window.switchTacticalModule('ammo')"
+                        class="sticky top-0 z-10 bg-zinc-950/95 backdrop-blur-md border-b border-gray-800 flex gap-2 p-1 rounded-lg overflow-x-auto no-scrollbar">
+                        <button id="subtab-quick-dope" onclick="window.switchTacticalModule('quick-dope')"
                             class="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-[var(--input-text)] transition-all rounded bg-blue-900/40 text-[var(--input-text)] min-w-[80px] flex items-center justify-center gap-2">
-                            <i data-lucide="package" class="w-3.5 h-3.5"></i> Ammo
+                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Dope
                         </button>
-                        <button id="subtab-drills" onclick="window.switchTacticalModule('drills')"
+                        <button id="subtab-ammo" onclick="window.switchTacticalModule('ammo')"
                             class="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-[var(--input-text)] transition-all rounded min-w-[80px] flex items-center justify-center gap-2">
-                            <i data-lucide="target" class="w-3.5 h-3.5"></i> Drills
+                            <i data-lucide="package" class="w-3.5 h-3.5"></i> Ammo
                         </button>
                         <button id="subtab-what-if" onclick="window.switchTacticalModule('what-if')"
                             class="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-[var(--input-text)] transition-all rounded min-w-[80px] flex items-center justify-center gap-2">
                             <i data-lucide="flask-conical" class="w-3.5 h-3.5"></i> Lab
                         </button>
-                        <button id="subtab-quick-dope" onclick="window.switchTacticalModule('quick-dope')"
+                        <button id="subtab-drills" onclick="window.switchTacticalModule('drills')"
                             class="flex-1 py-3 text-[9px] font-black uppercase tracking-widest text-zinc-500 hover:text-[var(--input-text)] transition-all rounded min-w-[80px] flex items-center justify-center gap-2">
-                            <i data-lucide="file-text" class="w-3.5 h-3.5"></i> Dope
+                            <i data-lucide="target" class="w-3.5 h-3.5"></i> Drills
                         </button>
                     </div>
 
@@ -3988,7 +3997,7 @@
                         }
 
                         // 1. Check Container
-                        if (!container) {
+                        if (container) {
                             if (!container || container.offsetParent === null) {
                                 return; // Hidden, wait
                             }
@@ -4000,7 +4009,7 @@
 
                             // 3. Check for Existing Map
                             if (window.map) {
-                                clearInterval(checkInterval);
+                                clearInterval(output);
                                 return;
                             }
 
@@ -4013,16 +4022,18 @@
                                 }
                             }
 
-                            // Stop checking after 60 checks
-                            if (checks >= maxChecks) {
-                                clearInterval(checkInterval);
-                            }
-                        }, 500);
+                        }
+
+                        // Stop checking after 60 checks
+                        if (checks >= 60) {
+                            clearInterval(output);
+                        }
+                    }, 500);
                 })();
             </script>
             <script src="map_logic.js?v=CACHEBUST_FIX"></script>
             <script src="card_templates.js"></script>
-            <script src="script.js?v=3.3"></script>
+            <script src="script.js?v=3.8"></script>
             <script> lucide.createIcons(); </script>
             <script>
                 if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {

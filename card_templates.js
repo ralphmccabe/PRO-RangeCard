@@ -43,6 +43,17 @@ const CARD_TEMPLATES = {
                 <div class="border border-black p-1 h-8 flex items-center relative"><img src="./assets/binoculars.png" class="h-6 w-auto opacity-50"><span id="display-lrf-notes" class="ml-2 text-[10px] font-bold"></span></div>
                 <div class="border border-black p-1 h-8 flex items-center relative"><img src="./assets/wind.png" class="h-6 w-auto opacity-50"><span id="display-wind-notes" class="ml-2 text-[10px] font-bold"></span></div>
                 <div class="border border-black p-1 h-8 flex items-center relative"><img src="./assets/compass.png" class="h-6 w-auto opacity-50"><span id="display-direction-notes" class="ml-2 text-[10px] font-bold"></span></div>
+                
+                <!-- Target Data (T1-T3) -->
+                <div class="border border-black p-1 mt-1 bg-gray-50 flex-1 overflow-visible">
+                    <div class="text-[8px] font-bold border-b border-black mb-1 text-center bg-gray-200">TARGET DATA</div>
+                    <div class="grid grid-cols-1 gap-y-1 text-[8px] leading-tight">
+                         <div class="flex justify-between border-b border-gray-300"><span>T1:</span> <span><span id="display-shooting-angle"></span> / <span id="display-compass-range"></span></span></div>
+                         <div class="flex justify-between border-b border-gray-300"><span>T2:</span> <span><span id="display-shooting-angle-2"></span> / <span id="display-compass-range-2"></span></span></div>
+                         <div class="flex justify-between border-b border-gray-300"><span>T3:</span> <span><span id="display-shooting-angle-3"></span> / <span id="display-compass-range-3"></span></span></div>
+                    </div>
+                </div>
+
             </div>
 
             <!-- Column 3: Reticles (Flex Fill) -->
@@ -148,6 +159,21 @@ const CARD_TEMPLATES = {
                     <div class="border border-black p-1 h-8 flex items-center"><img src="./assets/wind.png" class="h-5 w-auto opacity-50"><span id="display-wind-notes" class="ml-2 text-[10px] font-bold"></span></div>
                  </div>
 
+                 <!-- Target Data (T1-T3) -->
+                 <div class="border border-black p-2 bg-gray-50">
+                    <div class="text-[10px] font-bold border-b border-black mb-2 flex justify-between">
+                        <span>TARGET DATA LIST</span>
+                        <span class="text-[8px] font-normal uppercase opacity-70">Angle / Range</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-y-1 text-[10px] font-mono">
+                         <div class="flex justify-between border-b border-gray-300"><span>T1:</span> <span class="font-bold text-blue-900"><span id="display-shooting-angle"></span> / <span id="display-compass-range"></span></span></div>
+                         <div class="flex justify-between border-b border-gray-300"><span>T2:</span> <span class="font-bold text-blue-900"><span id="display-shooting-angle-2"></span> / <span id="display-compass-range-2"></span></span></div>
+                         <div class="flex justify-between border-b border-gray-300"><span>T3:</span> <span class="font-bold text-blue-900"><span id="display-shooting-angle-3"></span> / <span id="display-compass-range-3"></span></span></div>
+                    </div>
+                 </div>
+
+
+
                  <!-- Reticles -->
                  <div class="flex justify-center gap-4 py-4 border-t border-b border-gray-200">
                     <div class="relative w-[120px] h-[120px] border border-gray-300 rounded-full flex items-center justify-center overflow-hidden">
@@ -172,7 +198,7 @@ const CARD_TEMPLATES = {
                  </div>
             </div>
         </div>
-    `
+    `,
     // 3. SWAT / URBAN OPS CARD
     'swat': `
         <div class="flex gap-4 h-full">
@@ -233,6 +259,21 @@ const CARD_TEMPLATES = {
                     <div class="border border-black p-1 h-8 flex items-center"><img src="./assets/binoculars.png" class="h-5 w-auto opacity-50"><span id="display-lrf-notes" class="ml-2 text-[10px] font-bold"></span></div>
                     <div class="border border-black p-1 h-8 flex items-center"><img src="./assets/wind.png" class="h-5 w-auto opacity-50"><span id="display-wind-notes" class="ml-2 text-[10px] font-bold"></span></div>
                  </div>
+
+                 <!-- Target Data (T1-T3) -->
+                 <div class="border border-black p-2 bg-gray-50">
+                    <div class="text-[10px] font-bold border-b border-black mb-2 flex justify-between text-red-900">
+                        <span>TARGET / SECTOR DATA</span>
+                        <span class="text-[8px] font-normal uppercase opacity-70">Deg / Yds</span>
+                    </div>
+                    <div class="grid grid-cols-1 gap-y-1 text-[10px] font-mono">
+                         <div class="flex justify-between border-b border-gray-300"><span>T1:</span> <span class="font-bold text-red-900"><span id="display-shooting-angle"></span> / <span id="display-compass-range"></span></span></div>
+                         <div class="flex justify-between border-b border-gray-300"><span>T2:</span> <span class="font-bold text-red-900"><span id="display-shooting-angle-2"></span> / <span id="display-compass-range-2"></span></span></div>
+                         <div class="flex justify-between border-b border-gray-300"><span>T3:</span> <span class="font-bold text-red-900"><span id="display-shooting-angle-3"></span> / <span id="display-compass-range-3"></span></span></div>
+                    </div>
+                 </div>
+
+
 
                  <!-- Reticles -->
                  <div class="flex justify-center gap-4 py-4 border-t border-b border-gray-200">

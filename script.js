@@ -138,9 +138,16 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 document.addEventListener('DOMContentLoaded', () => {
     // === 0. Global Tactical State & Refs ===
     const targetConfigs = [
-        { angleId: 'shooting-angle', rangeId: 'compass-range', label: 'T1 Shot:' },
-        { angleId: 'shooting-angle-2', rangeId: 'compass-range-2', label: 'T2 Shot:' },
-        { angleId: 'shooting-angle-3', rangeId: 'compass-range-3', label: 'T3 Shot:' }
+        { angleId: 'shooting-angle', rangeId: 'compass-range', label: 'T1 Shot:', mobileId: 'mobile-display-shooting-angle' },
+        { angleId: 'shooting-angle-2', rangeId: 'compass-range-2', label: 'T2 Shot:', mobileId: 'mobile-display-shooting-angle-2' },
+        { angleId: 'shooting-angle-3', rangeId: 'compass-range-3', label: 'T3 Shot:', mobileId: 'mobile-display-shooting-angle-3' },
+        { angleId: 'shooting-angle-4', rangeId: 'compass-range-4', label: 'T4 Shot:', mobileId: 'mobile-display-shooting-angle-4' },
+        { angleId: 'shooting-angle-5', rangeId: 'compass-range-5', label: 'T5 Shot:', mobileId: 'mobile-display-shooting-angle-5' },
+        { angleId: 'shooting-angle-6', rangeId: 'compass-range-6', label: 'T6 Shot:', mobileId: 'mobile-display-shooting-angle-6' },
+        { angleId: 'shooting-angle-7', rangeId: 'compass-range-7', label: 'T7 Shot:', mobileId: 'mobile-display-shooting-angle-7' },
+        { angleId: 'shooting-angle-8', rangeId: 'compass-range-8', label: 'T8 Shot:', mobileId: 'mobile-display-shooting-angle-8' },
+        { angleId: 'shooting-angle-9', rangeId: 'compass-range-9', label: 'T9 Shot:', mobileId: 'mobile-display-shooting-angle-9' },
+        { angleId: 'shooting-angle-10', rangeId: 'compass-range-10', label: 'T10 Shot:', mobileId: 'mobile-display-shooting-angle-10' }
     ];
     // Use window scope for these refs so global functions can see them if needed
     window.chatHistory = document.getElementById('ai-chat-history');
@@ -157,11 +164,17 @@ document.addEventListener('DOMContentLoaded', () => {
         'date', 'time', 'caliber', 'zero', 'barrel', 'bullet', 'load', 'powder',
         'primer', 'col', 'rings', 'velocity', 'g1', 'environment-summary', 'temperature', 'humidity', 'pressure', 'wind-speed', 'cosine', 'misc', 'targetSize', 'groupSize', 'elevation', 'hold-data', 'final-dope',
         'rifle-notes', 'wind-notes', 'scope-notes', 'shooting-angle', 'direction-notes', 'lrf-notes', 'compass-range',
-        'shooting-angle-2', 'compass-range-2', 'shooting-angle-3', 'compass-range-3', 'hold-grade', 'shot-grade', 'hold-value', 'shot-grade-color',
+        'shooting-angle-2', 'compass-range-2', 'shooting-angle-3', 'compass-range-3',
+        'shooting-angle-4', 'compass-range-4', 'shooting-angle-5', 'compass-range-5',
+        'shooting-angle-6', 'compass-range-6', 'shooting-angle-7', 'compass-range-7',
+        'shooting-angle-8', 'compass-range-8', 'shooting-angle-9', 'compass-range-9',
+        'shooting-angle-10', 'compass-range-10',
+        'hold-grade', 'shot-grade', 'hold-value', 'shot-grade-color',
         // Work Center IDs
         'owc-range', 'owc-zero', 'owc-mv', 'owc-bc',
         'owc-wind-dir', 'owc-wind-speed', 'owc-los-heading', 'owc-angle',
-        'owc-da', 'owc-alt', 'owc-temp', 'owc-hum', 'owc-press'
+        'owc-da', 'owc-alt', 'owc-temp', 'owc-hum', 'owc-press',
+        'owc-slope'
     ];
 
     // Responsive Scaling Logic
@@ -732,19 +745,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     try {
                         localStorage.setItem('rangeCardProfiles', JSON.stringify(ps));
                         console.log(`[SYS] Profile "${name}" archived.`);
+
+                        // Instantly open library AFTER save is confirmed
+                        openLibrary();
+                        previewProfile(name);
+
+                        if (typeof addChatBubble === 'function') {
+                            addChatBubble('bot', ` Record "${name}" secured.`);
+                        }
                     } catch (e) {
                         console.error("Storage error:", e);
                         alert("Storage limit reached. Try deleting old records.");
                     }
                 }, 100);
-
-                // Instantly open library
-                openLibrary();
-                previewProfile(name);
-
-                if (typeof addChatBubble === 'function') {
-                    addChatBubble('bot', ` Record "${name}" secured.`);
-                }
             }).catch(err => {
                 if (wasHidden) {
                     previewPanel.classList.add('hidden');
@@ -1228,7 +1241,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     ctx.stroke();
                     ctx.setLineDash([]);
 
-                    // Draw X Marker
+                    // Draw X Marker on vector tip
                     const xs = 5;
                     ctx.lineWidth = 2.5;
                     ctx.strokeStyle = '#000';
@@ -1239,47 +1252,150 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Draw Label with Background
                     const txt = ri.value;
-                    if (txt) {
-                        ctx.font = 'bold 8px Inter, sans-serif';
-                        ctx.textBaseline = 'middle';
+                    const labelText = `XT${index + 1} ${txt || ''}`; // e.g., XT1 500
 
-                        // Alternate sides (T1 left, T2 right, T3 left)
-                        // index 1 is T2 (Left Align -> Prints Right)
-                        let textAlign = (index === 1) ? 'left' : 'right';
-                        let labelX = (index === 1) ? ex + 10 : ex - 10;
-                        let labelY = ey;
+                    ctx.font = 'bold 9px Inter, sans-serif';
+                    ctx.textBaseline = 'middle';
 
-                        // Small vertical stagger to prevent overlap
-                        if (index === 0) labelY -= 8;
-                        if (index === 2) labelY += 8;
+                    // Smart Label Positioning to avoid overlap and overflow
+                    const metrics = ctx.measureText(labelText);
+                    const labelWidth = metrics.width;
+                    const padding = 2;
+                    const totalWidth = labelWidth + (padding * 2);
 
-                        // Measure for background
-                        const metrics = ctx.measureText(txt);
-                        const padding = 2;
-                        ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                    // Default alignment based on position
+                    let textAlign = (ex > centerX) ? 'left' : 'right';
+                    let labelX = (ex > centerX) ? ex + 10 : ex - 10;
+                    let labelY = ey + (index % 3 - 1) * 8; // Stagger
 
-                        let bgX = labelX;
-                        if (textAlign === 'right') bgX -= metrics.width;
-                        if (textAlign === 'center') bgX -= metrics.width / 2;
-
-                        ctx.fillRect(bgX - padding, labelY - 5, metrics.width + (padding * 2), 10);
-
-                        // Draw Text
-                        ctx.textAlign = textAlign;
-                        ctx.fillStyle = '#1e3a8a';
-                        ctx.fillText(txt, labelX, labelY);
+                    // Bounds Checking (Horizontal)
+                    if (textAlign === 'left' && (labelX + totalWidth > width)) {
+                        // Flip to right side if it hits the right edge
+                        textAlign = 'right';
+                        labelX = ex - 10;
+                    } else if (textAlign === 'right' && (labelX - totalWidth < 0)) {
+                        // Flip to left side if it hits the left edge
+                        textAlign = 'left';
+                        labelX = ex + 10;
                     }
+
+                    // FINAL Safety Cap (ensure totalWidth doesn't push start/end out of 0-width)
+                    if (textAlign === 'left') {
+                        if (labelX + totalWidth > width - 2) labelX = width - totalWidth - 2;
+                    } else {
+                        if (labelX - totalWidth < 2) labelX = totalWidth + 2;
+                    }
+
+                    // Bounds Checking (Vertical)
+                    if (labelY < 10) labelY = 10;
+                    if (labelY > height - 10) labelY = height - 10;
+
+                    // Measure for background
+                    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+                    let bgX = (textAlign === 'left') ? labelX : labelX - labelWidth;
+
+                    ctx.fillRect(bgX - padding, labelY - 6, totalWidth, 12);
+
+                    // Draw Text
+                    ctx.textAlign = textAlign;
+                    ctx.fillStyle = '#1e3a8a'; // Blue-900
+                    ctx.fillText(labelText, labelX, labelY);
                 });
             }
         });
     };
 
+    // === Camo Theme Logic ===
+    window.setCompassGlow = function (mode) {
+        const container = document.querySelector('.glow-container');
+        if (!container) return;
+
+        // Reset existing glow classes
+        const classesToCheck = [
+            'glow-amber', 'glow-red', 'glow-green', 'glow-purple', 'glow-cyan', 'glow-white',
+            'glow-pink', 'glow-orange', 'glow-snowy', 'glow-desert', 'glow-summer', 'glow-urban'
+        ];
+        container.classList.remove(...classesToCheck);
+
+        // Add new class
+        if (mode && mode !== 'default') {
+            container.classList.add(`glow-${mode}`);
+        }
+
+        // Update Button Text
+        const btn = document.getElementById('colorCycleBtn');
+        if (btn) {
+            btn.textContent = `FLAVORS: ${mode.toUpperCase()}`;
+            // Dynamic button styling based on mode could go here
+        }
+
+        localStorage.setItem('compass-theme-preference', mode);
+    };
+
+    window.cycleCamoTheme = function () {
+        const themes = [
+            'default', 'amber', 'red', 'green', 'purple', 'cyan', 'white',
+            'pink', 'orange', 'snowy', 'desert', 'summer', 'urban'
+        ];
+        const current = localStorage.getItem('compass-theme-preference') || 'default';
+        let nextIndex = themes.indexOf(current) + 1;
+        if (nextIndex >= themes.length) nextIndex = 0;
+
+        window.setCompassGlow(themes[nextIndex]);
+    };
+
+    // Attached to HUD controls, no longer initialized for main UI
+    // Attach Cycle Listener - REMOVED since colorCycleBtn is removed from main UI
+    /*
+    const cycleBtn = document.getElementById('colorCycleBtn');
+    if (cycleBtn) {
+        cycleBtn.addEventListener('click', (e) => {
+            e.preventDefault(); 
+            e.stopPropagation();
+            window.cycleCamoTheme();
+        });
+    }
+    */
+
+    // === Update Mobile Compass Data Text ===
+    window.updateMobileCompassData = function () {
+        targetConfigs.forEach(c => {
+            const angleInput = document.getElementById(c.angleId);
+            const displayEl = document.getElementById(c.mobileId);
+            if (angleInput && displayEl) {
+                // If it's the first one, we might want to check for 'direction-notes' logic too, 
+                // but usually the specific field is what matters.
+                displayEl.textContent = angleInput.value || '';
+            }
+        });
+
+        // Also update standard Direction Notes if present
+        const dirNotes = document.getElementById('direction-notes');
+        const mobileDir = document.getElementById('mobile-display-direction-notes');
+        if (dirNotes && mobileDir) {
+            mobileDir.textContent = dirNotes.value;
+        }
+    };
+
     targetConfigs.forEach(c => {
         [c.angleId, c.rangeId].forEach(id => {
             const el = document.getElementById(id);
-            if (el) ['input', 'change', 'blur'].forEach(ev => el.addEventListener(ev, window.drawCompassVector));
+            if (el) {
+                ['input', 'change', 'blur'].forEach(ev => {
+                    el.addEventListener(ev, () => {
+                        window.drawCompassVector();
+                        window.updateMobileCompassData();
+                    });
+                });
+            }
         });
     });
+
+    // Bind Direction Notes 
+    const dirInput = document.getElementById('direction-notes');
+    if (dirInput) {
+        ['input', 'change'].forEach(ev => dirInput.addEventListener(ev, window.updateMobileCompassData));
+    }
     setTimeout(window.drawCompassVector, 500);
 
     // === 6. Pencil Tool (Unified & Bidirectional) ===
@@ -2076,6 +2192,67 @@ document.addEventListener('DOMContentLoaded', () => {
     window.closeHelpModal = function () {
         const modal = document.getElementById('helpModal');
         if (modal) modal.classList.add('hidden');
+    };
+
+    // === WORK CENTER SYNC LOGIC ===
+    window.syncOWCWeather = function (forceUpdate = false) {
+        console.log("[OWC] Syncing Global Weather to Work Center...");
+
+        // 1. Get Global Values (Left Panel)
+        const gTemp = document.getElementById('temperature')?.value || '59';
+        const gHum = document.getElementById('humidity')?.value || '50';
+        const gPress = document.getElementById('pressure')?.value || '29.92';
+        const gWindSpd = document.getElementById('wind-speed')?.value || '0';
+        const gWindDir = document.getElementById('wind-dir')?.value || '270';
+
+        // 2. Set OWC Values
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        setVal('owc-temp', gTemp);
+        setVal('owc-hum', gHum);
+        setVal('owc-press', gPress);
+        // setVal('owc-wind-speed', gWindSpd); // Disabled to prevent overwriting manual wind (Box #11)
+        // setVal('owc-wind-dir', gWindDir);   // Disabled to prevent overwriting manual wind (Box #11)
+
+        // 3. Recalculate DA
+        // We use Altimeter setting (Standard is false for isStationPressure if input is sea level corrected)
+        // If users input uncorrected station pressure, this might need a toggle, but usually 'pressure' input is Altimeter.
+        const alt = parseFloat(document.getElementById('owc-alt')?.value) || 0;
+        const temp = parseFloat(gTemp);
+        const hum = parseFloat(gHum);
+        const press = parseFloat(gPress);
+
+        if (window.calculateDA) {
+            // Using false for isStationPressure assumes input is Altimeter Setting (common for Kestrel/Weather apps)
+            const da = window.calculateDA(alt, temp, hum, press, false);
+            setVal('owc-da', da);
+
+            // Update display if exists
+            const disp = document.getElementById('owc-calc-da-display');
+            if (disp) disp.textContent = da;
+        }
+
+        // 4. Update OWC State
+        if (forceUpdate && window.updateOWC) {
+            window.updateOWC();
+        }
+
+        // 5. Visual Feedback
+        if (forceUpdate) {
+            const btn = document.querySelector('button[onclick="window.syncOWCWeather(true)"]');
+            if (btn) {
+                const originalText = btn.textContent;
+                btn.textContent = "SYNCED";
+                btn.classList.add('bg-green-600', 'text-white');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('bg-green-600', 'text-white');
+                }, 1000);
+            }
+        }
     };
 
     if (openIntelBtn) {
@@ -3566,8 +3743,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     'owc-hum': weather.humidity,
                     'owc-press': weather.pressure,
                     'owc-alt': weather.msl, // Sync topo elevation to ALT input
-                    'owc-wind-speed': weather.windSpd,
-                    'owc-wind-dir': weather.windDir,
+                    // 'owc-wind-speed': weather.windSpd, // Disabled to preserve manual wind
+                    // 'owc-wind-dir': weather.windDir,   // Disabled to preserve manual wind
                     'temperature': weather.temp,
                     'humidity': weather.humidity,
                     'pressure': weather.pressure,
@@ -3577,7 +3754,17 @@ document.addEventListener('DOMContentLoaded', () => {
                 Object.entries(controls).forEach(([id, val]) => {
                     const el = document.getElementById(id);
                     if (el) {
+                        // OWC Guard - Only update OWC fields if LIVE SYNC is ON
+                        if (id.startsWith('owc-') && !window.owcLiveSync) return;
+
                         el.value = val;
+
+                        // Special handling for Slider Display
+                        if (id === 'owc-wind-speed') {
+                            const valDisp = document.getElementById('owc-wind-speed-val');
+                            if (valDisp) valDisp.textContent = val;
+                        }
+
                         el.classList.add('text-neon-green');
                         setTimeout(() => el.classList.remove('text-neon-green'), 2000);
                     }
@@ -5143,7 +5330,7 @@ window.updateOWC = function () {
         const profile = { velocity: mv, zero, bc, scopeHeight: 1.75 };
 
         // 2. Execute Unified Math
-        const result = window.BallisticEngine.calculate(profile, weather, range);
+        const result = window.BallisticEngine.calculate(profile, weather, range, angle);
 
         // 3. Update Relative Wind Status
         const relWindStatus = document.getElementById('owc-rel-wind-status');
@@ -5226,14 +5413,24 @@ window.updateOWC = function () {
         window.syncOWCReticle(parseFloat(result.elevMil), parseFloat(result.windMil));
 
         // 6. Push to Main Card
-        const mainHoldLabel = document.getElementById('display-hold-value');
-        if (mainHoldLabel) {
-            mainHoldLabel.textContent = `OWC: ${result.elevMil} MIL`;
-            mainHoldLabel.classList.add('text-blue-600', 'font-black');
-        }
+        // const mainHoldLabel = document.getElementById('display-hold-value');
+        // if (mainHoldLabel) {
+        //     mainHoldLabel.textContent = `${result.elevMil} MIL`;
+        //     mainHoldLabel.classList.add('text-blue-600', 'font-black');
+        // }
 
     } catch (err) {
         console.error("[OWC] Unified Logic Failure:", err);
+    }
+
+    // AUTO-UPDATE DOPE CHART
+    // If we are in the Work Center, we want the Dope Chart to be ready
+    if (typeof window.generateQuickDope === 'function') {
+        // Small delay to ensure state is settled if coming from rapid inputs
+        // using requestAnimationFrame for UI smoothness
+        requestAnimationFrame(() => {
+            window.generateQuickDope();
+        });
     }
 };
 
@@ -5296,39 +5493,78 @@ window.toggleOWCAtmosMode = function () {
     window.updateOWC();
 };
 
-window.syncOWCWeather = function () {
+window.calculateDA = function (alt, tempF, hum, pressInHg, isStationPressure = true) {
+    // 1. Convert Inputs
+    const tempC = (tempF - 32) * 5 / 9;
+    const tempK = tempC + 273.15;
+    let stationP = pressInHg; // inHg
+
+    // 2. Handle Station vs Altimeter
+    if (!isStationPressure) {
+        // approx conversion
+        stationP = pressInHg * Math.pow((288.15 - 0.0019812 * alt) / 288.15, 5.256);
+    }
+
+    // 3. Vapor Pressure (Tetens)
+    const es = 6.112 * Math.exp(17.67 * tempC / (tempC + 243.5));
+    const e = (hum / 100) * es; // hPa
+
+    // 4. Virtual Temp
+    const p_hpa = stationP * 33.8639;
+    const tv = tempK / (1 - (e / p_hpa) * (1 - 0.622));
+
+    // 5. Density Altitude (NWS / Shelquist)
+    // DA = 145442.16 * [1 - (P_stat/P_std / Tv/T_std)^0.235]
+    const da = 145442.16 * (1 - Math.pow((p_hpa / 1013.25) / (tv / 288.15), 0.235));
+
+    return Math.round(da) || 0;
+};
+
+window.syncOWCWeather = function (force = false) {
     const daInp = document.getElementById('owc-da');
     if (!daInp) return;
+
+    // Guard: Respect Manual Mode unless forced
+    if (!window.owcLiveSync && !force) return;
 
     // Pull from Main HUD master inputs
     const temp = parseFloat(document.getElementById('temperature')?.value) || 59;
     const hum = parseFloat(document.getElementById('humidity')?.value) || 50;
-    const pres = parseFloat(document.getElementById('pressure')?.value) || 29.92;
+    const press = parseFloat(document.getElementById('pressure')?.value) || 29.92;
 
     // Use high-fidelity formula
-    const calculatedDA = window.calculateDA(0, temp, hum, pres);
+    const calculatedDA = window.calculateDA(0, temp, hum, press);
     daInp.value = calculatedDA;
 
     // Also push to OWC widgets if they exist (Bi-directional visual sync)
     const syncMap = {
         'owc-temp': temp,
-        'owc-press': pres,
+        'owc-press': press,
         'owc-hum': hum,
         'owc-mv': document.getElementById('velocity')?.value,
         'owc-bc': document.getElementById('g1')?.value,
-        'owc-zero': document.getElementById('zero')?.value
+        'owc-zero': document.getElementById('zero')?.value,
+        'owc-wind-speed': document.getElementById('wind-speed')?.value,
+        'owc-wind-dir': document.getElementById('wind-dir')?.value
     };
 
     Object.entries(syncMap).forEach(([targetId, val]) => {
         const el = document.getElementById(targetId);
-        if (el && val !== undefined) el.value = val;
+        if (el && val !== undefined) {
+            el.value = val;
+            // Slider Display Sync
+            if (targetId === 'owc-wind-speed') {
+                const valDisp = document.getElementById('owc-wind-speed-val');
+                if (valDisp) valDisp.textContent = val;
+            }
+        }
     });
 
     // Unified call for efficiency
     window.updateOWC();
 
     // LOG SYNC ACTION
-    if (typeof SessionLogger !== 'undefined') {
+    if (typeof SessionLogger !== 'undefined' && force) {
         SessionLogger.add("USER", `Synced OWC Weather: DA ${calculatedDA} ft`);
     }
 
@@ -5395,6 +5631,9 @@ window.resetWorkCenter = function () {
         btn.classList.add('bg-amber-600');
         setTimeout(() => btn.classList.remove('bg-amber-600'), 500);
     }
+
+    // Clear Saved State
+    localStorage.removeItem('trc_owc_state');
 
     console.log("[OWC] Work Center Reset.");
     window.updateOWC();
@@ -5914,7 +6153,7 @@ window.BallisticEngine = {
     /**
      * Core Physics Engine (Pejsa-Wrapper Approximation)
      */
-    calculate(profile, weather, range) {
+    calculate(profile, weather, range, inclination = 0) {
         const airDensity = this.calculateAirDensity(weather.temp, weather.pressure, weather.humidity);
 
         // 1. Air Density & Range (Priority: Manual DA -> Calc)
@@ -5972,6 +6211,15 @@ window.BallisticEngine = {
         // 5. Mils Conversion
         const inchesPerMil = (range * 36) / 1000;
         let elevMil = (range === 0) ? 0 : drop_path / inchesPerMil;
+
+        // --- SLOPE CORRECTION (Cosine Rule) ---
+        const slope = inclination || weather.inclination || 0;
+        if (slope !== 0) {
+            const radSlope = (slope * Math.PI) / 180;
+            const cosSlope = Math.cos(radSlope);
+            elevMil *= cosSlope;
+            drop_path *= cosSlope; // Update inches too
+        }
 
         // 6. Windage (Didion Lag + Spin)
         const t_vac = rangeFt / mv;
@@ -6164,11 +6412,13 @@ window.getTacticalContext = function (source = 'smart') {
     const da = owcDaVal ? parseFloat(owcDaVal) : null;
 
     // Standard atmosphere fallbacks
+    // Standard atmosphere fallbacks (Prioritize Work Center "owc-" inputs)
     const temp = parseFloat(document.getElementById('owc-temp')?.value) ||
         parseFloat(document.getElementById('temperature')?.value) || 59;
     const press = parseFloat(document.getElementById('owc-press')?.value) ||
         parseFloat(document.getElementById('pressure')?.value) || 29.92;
-    const hum = parseFloat(document.getElementById('humidity')?.value) || 50;
+    const hum = parseFloat(document.getElementById('owc-hum')?.value) ||
+        parseFloat(document.getElementById('humidity')?.value) || 50;
 
     // Wind Logic (OWC specialized widgets)
     const owcWindSpd = parseFloat(document.getElementById('owc-wind-speed')?.value);
@@ -6176,9 +6426,14 @@ window.getTacticalContext = function (source = 'smart') {
     const hudWindSpd = parseFloat(document.getElementById('wind-speed')?.value) || 0;
 
     const windSpeed = !isNaN(owcWindSpd) ? owcWindSpd : hudWindSpd;
-    const windAngle = !isNaN(owcWindAng) ? owcWindAng : 90;
+    const rawWindAngle = !isNaN(owcWindAng) ? owcWindAng : 90;
+    const losHeading = parseFloat(document.getElementById('owc-los-heading')?.value) || 0;
+    const inclination = parseFloat(document.getElementById('owc-angle')?.value) || 0;
 
-    const weather = { temp, pressure: press, humidity: hum, windSpeed, windAngle, da };
+    // Convert to Relative Wind for Ballistics
+    const windAngle = (rawWindAngle - losHeading + 360) % 360;
+
+    const weather = { temp, pressure: press, humidity: hum, windSpeed, windAngle, da, inclination };
 
     // 2. Gather profile (Priority: Active Batch -> HUD -> Defaults)
     let velocity, zero, bc, scopeHeight = 1.75;
@@ -6193,27 +6448,123 @@ window.getTacticalContext = function (source = 'smart') {
     const activeBatchId = localStorage.getItem('trc_active_batch_id');
     const batch = batches.find(b => b.id.toString() === activeBatchId);
 
+    // SOURCE LABELING LOGIC
     if (source === 'batch' && batch) {
         velocity = batch.mv || batch.speed || hudMv;
         zero = batch.zero || hudZero;
         bc = batch.bc || hudBc;
         sourceName = `AMMO: ${batch.name || 'BATCH'}`;
-    } else if (source === 'live' || source === 'hud') {
+    } else {
+        // Default to what's on screen (Work Center)
         velocity = hudMv;
         zero = hudZero;
         bc = hudBc;
-        sourceName = (source === 'live') ? "LIVE SENSORS" : "MAIN HUD";
-    } else { // 'smart' mode - Priority: Active Batch > HUD
-        velocity = batch ? (batch.mv || batch.speed) : hudMv;
-        zero = batch ? (batch.zero || 100) : hudZero;
-        bc = batch ? batch.bc : hudBc;
-        sourceName = batch ? `AUTO: ${batch.name}` : "AUTO: HUD";
+
+        // Determine Source Label
+        if (window.owcLiveSync) {
+            sourceName = "LIVE SENSORS";
+        } else {
+            sourceName = "WORK CENTER (MANUAL)";
+        }
+
+        // If 'batch' was requested but no batch found, fallback to above
+        if (source === 'batch') console.warn("[Context] Batch requested but not found, using OWC");
     }
 
     const profile = { velocity, zero, bc, scopeHeight };
 
     return { profile, weather, sourceName };
 };
+
+// --- WORK CENTER PERSISTENCE ---
+window.saveWorkCenterState = function () {
+    const state = {
+        range: document.getElementById('owc-range')?.value || '',
+        zero: document.getElementById('owc-zero')?.value || '',
+        mv: document.getElementById('owc-mv')?.value || '',
+        bc: document.getElementById('owc-bc')?.value || '',
+        windSpeed: document.getElementById('owc-wind-speed')?.value || '',
+        windDir: document.getElementById('owc-wind-dir')?.value || '',
+        losHeading: document.getElementById('owc-los-heading')?.value || '',
+        angle: document.getElementById('owc-angle')?.value || '',
+        da: document.getElementById('owc-da')?.value || '',
+        temp: document.getElementById('owc-temp')?.value || '',
+        hum: document.getElementById('owc-hum')?.value || '',
+        press: document.getElementById('owc-press')?.value || '',
+        alt: document.getElementById('owc-alt')?.value || '',
+        slope: document.getElementById('owc-slope')?.value || ''
+    };
+    localStorage.setItem('trc_owc_state', JSON.stringify(state));
+    // console.log("[OWC] State Saved", state);
+};
+
+window.loadWorkCenterState = function () {
+    const saved = localStorage.getItem('trc_owc_state');
+    if (!saved) return;
+
+    try {
+        const state = JSON.parse(saved);
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val;
+        };
+
+        setVal('owc-range', state.range);
+        setVal('owc-zero', state.zero);
+        setVal('owc-mv', state.mv);
+        setVal('owc-bc', state.bc);
+        setVal('owc-wind-speed', state.windSpeed);
+        setVal('owc-wind-dir', state.windDir);
+        setVal('owc-los-heading', state.losHeading);
+        setVal('owc-angle', state.angle);
+        setVal('owc-da', state.da);
+        setVal('owc-temp', state.temp);
+        setVal('owc-hum', state.hum);
+        setVal('owc-press', state.press);
+        setVal('owc-alt', state.alt);
+        setVal('owc-slope', state.slope);
+
+        console.log("[OWC] State Restored");
+        // Trigger update to refresh calcs with restored data
+        if (typeof window.updateOWC === 'function') window.updateOWC();
+
+    } catch (e) {
+        console.error("[OWC] Load Error:", e);
+    }
+};
+
+// Auto-Save Listeners
+document.addEventListener('DOMContentLoaded', () => {
+    // ... existing init code ...
+    window.loadWorkCenterState();
+
+    const owcIds = [
+        'owc-range', 'owc-zero', 'owc-mv', 'owc-bc',
+        'owc-wind-speed', 'owc-wind-dir', 'owc-los-heading', 'owc-angle',
+        'owc-da', 'owc-temp', 'owc-hum', 'owc-press', 'owc-alt', 'owc-slope'
+    ];
+
+    owcIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', window.saveWorkCenterState);
+            el.addEventListener('change', window.saveWorkCenterState);
+
+            // Auto-Switch to MANUAL Mode on User Input
+            el.addEventListener('input', () => {
+                if (window.owcLiveSync) {
+                    window.owcLiveSync = false;
+                    const btn = document.getElementById('owc-live-sync-btn');
+                    if (btn) {
+                        btn.classList.remove('bg-blue-600');
+                        btn.classList.add('bg-zinc-800', 'text-zinc-500');
+                        btn.textContent = "MANUAL";
+                    }
+                }
+            });
+        }
+    });
+});
 // --- DA CALCULATION UTILITY ---
 window.calculateDA = function (altFt, tempF, hum, pressureInHg, isStationPressure = true) {
     // 1. Convert Inputs
@@ -6286,7 +6637,17 @@ window.generateQuickDope = function () {
 
         // 3. Render
         if (typeof window.renderDropTable === 'function') {
-            window.renderDropTable(data, context.sourceName);
+            // Pass specific header data to override defaults
+            const headerData = {
+                source: context.sourceName,
+                windSpeed: context.weather.windSpeed,
+                windDir: context.weather.windAngle, // This is already relative/absolute processed? No, getTacticalContext returns raw input usually.
+                // Let's grab Raw inputs for the header to be safe, or use the context values
+                rawWindDir: document.getElementById('owc-wind-dir')?.value || 270,
+                los: document.getElementById('owc-los-heading')?.value || 0
+            };
+
+            window.renderDropTable(data, headerData);
             localStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
@@ -6305,14 +6666,25 @@ window.generateQuickDope = function () {
     }
 };
 
-window.renderDropTable = function (data, sourceTitle = "QUICK DOPE") {
+window.renderDropTable = function (data, headerData = "QUICK DOPE") {
     const container = document.getElementById('dope-render-target');
     const titleEl = document.getElementById('dope-table-title');
     if (!container) return;
 
-    // Get Current Wind for Meta-Header
-    const wSpeed = document.getElementById('owc-wind-speed')?.value || document.getElementById('wind-speed')?.value || 0;
-    const wDir = document.getElementById('owc-wind-dir')?.value || document.getElementById('wind-dir')?.value || 270;
+    // Handle legacy string argument or new object argument
+    let sourceTitle = "QUICK DOPE";
+    let wSpeed = document.getElementById('owc-wind-speed')?.value || document.getElementById('wind-speed')?.value || 0;
+    let wDir = document.getElementById('owc-wind-dir')?.value || document.getElementById('wind-dir')?.value || 270;
+    let losVal = document.getElementById('owc-los-heading')?.value || 0;
+
+    if (typeof headerData === 'object') {
+        sourceTitle = headerData.source || "QUICK DOPE";
+        wSpeed = headerData.windSpeed !== undefined ? headerData.windSpeed : wSpeed;
+        wDir = headerData.rawWindDir !== undefined ? headerData.rawWindDir : wDir;
+        losVal = headerData.los !== undefined ? headerData.los : losVal;
+    } else {
+        sourceTitle = headerData;
+    }
 
     // Apply Title + Wind Meta
     if (titleEl) {
@@ -6327,6 +6699,7 @@ window.renderDropTable = function (data, sourceTitle = "QUICK DOPE") {
                     <div class="px-4 py-1.5 bg-black/5 border border-black/10 rounded flex gap-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
                         <span>WIND: <b class="text-orange-700 font-black">${wDir}°</b></span>
                         <span>SPD: <b class="text-orange-700 font-black">${wSpeed} MPH</b></span>
+                        <span>LOS: <b class="text-blue-700 font-black">${losVal}°</b></span>
                     </div>
                 </div>
             </div>
@@ -8481,3 +8854,313 @@ window.switchTacticalModule = function (moduleId) {
 
     console.log("Intel Hub Navigation Wrapper Installed.");
 })();
+
+
+// --- WORK CENTER PERSISTENCE ---
+window.saveWorkCenterState = function () {
+    const state = {
+        range: document.getElementById('owc-range')?.value,
+        zero: document.getElementById('owc-zero')?.value,
+        mv: document.getElementById('owc-mv')?.value,
+        bc: document.getElementById('owc-bc')?.value,
+        windSpeed: document.getElementById('owc-wind-speed')?.value,
+        windDir: document.getElementById('owc-wind-dir')?.value,
+        losHeading: document.getElementById('owc-los-heading')?.value,
+        angle: document.getElementById('owc-angle')?.value,
+        temp: document.getElementById('owc-temp')?.value,
+        press: document.getElementById('owc-press')?.value,
+        hum: document.getElementById('owc-hum')?.value,
+        da: document.getElementById('owc-da')?.value,
+        alt: document.getElementById('owc-alt')?.value,
+        atmosMode: window.owcAtmosMode,
+        liveSync: window.owcLiveSync
+    };
+    localStorage.setItem('trc_owc_state', JSON.stringify(state));
+};
+
+window.loadWorkCenterState = function () {
+    const saved = localStorage.getItem('trc_owc_state');
+    if (!saved) return;
+
+    try {
+        const state = JSON.parse(saved);
+
+        const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el && val !== undefined) el.value = val;
+        };
+
+        setVal('owc-range', state.range);
+        setVal('owc-zero', state.zero);
+        setVal('owc-mv', state.mv);
+        setVal('owc-bc', state.bc);
+
+        // Wind
+        setVal('owc-wind-speed', state.windSpeed);
+        setVal('owc-wind-dir', state.windDir);
+        const wsVal = document.getElementById('owc-wind-speed-val');
+        if (wsVal && state.windSpeed) wsVal.textContent = state.windSpeed;
+
+        // Environment
+        setVal('owc-temp', state.temp);
+        setVal('owc-press', state.press);
+        setVal('owc-hum', state.hum);
+        setVal('owc-da', state.da);
+        setVal('owc-alt', state.alt);
+        setVal('owc-los-heading', state.losHeading);
+        setVal('owc-angle', state.angle);
+
+        // Restore Modes
+        if (state.atmosMode && state.atmosMode !== window.owcAtmosMode) {
+            window.toggleOWCAtmosMode();
+            if (window.owcAtmosMode !== state.atmosMode) window.toggleOWCAtmosMode();
+        }
+
+        if (state.liveSync !== undefined) {
+            window.owcLiveSync = state.liveSync;
+            const btn = document.getElementById('owc-live-sync-btn');
+            if (btn) {
+                if (state.liveSync) {
+                    btn.classList.add('bg-blue-600');
+                    btn.classList.remove('bg-zinc-800', 'text-zinc-500');
+                    btn.textContent = "LIVE: ON";
+                } else {
+                    btn.classList.remove('bg-blue-600');
+                    btn.classList.add('bg-zinc-800', 'text-zinc-500');
+                    btn.textContent = "MANUAL";
+                }
+            }
+        }
+
+        setTimeout(() => {
+            if (window.updateOWC) window.updateOWC();
+        }, 100);
+
+    } catch (e) {
+        console.error("[OWC] Load State Error:", e);
+    }
+};
+
+// Hook up event listeners for persistence
+document.addEventListener('DOMContentLoaded', () => {
+    window.loadWorkCenterState();
+
+    const inputs = [
+        'owc-range', 'owc-zero', 'owc-mv', 'owc-bc',
+        'owc-wind-speed', 'owc-wind-dir',
+        'owc-los-heading', 'owc-angle',
+        'owc-temp', 'owc-press', 'owc-hum', 'owc-da', 'owc-alt'
+    ];
+
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', window.saveWorkCenterState);
+            el.addEventListener('change', window.saveWorkCenterState);
+        }
+    });
+});
+
+// --- BALLISTIC UNIFICATION HELPERS (RESTORED & UPGRADED) ---
+
+/**
+ * Gathers the current operational context (Profile + Weather) 
+ * Centralized logic to ensure Dope, Lab, and HUD use the same data.
+ */
+window.getTacticalContext = function (source = 'smart') {
+    // 1. Gather Weather (Priority: OWC Widgets -> Main HUD)
+    // OWC Density Alt (DA) is the most accurate source if available
+    const owcDaVal = document.getElementById('owc-da')?.value;
+    const da = owcDaVal ? parseFloat(owcDaVal) : null;
+
+    // Standard atmosphere fallbacks
+    const temp = parseFloat(document.getElementById('owc-temp')?.value) ||
+        parseFloat(document.getElementById('temperature')?.value) || 59;
+    const press = parseFloat(document.getElementById('owc-press')?.value) ||
+        parseFloat(document.getElementById('pressure')?.value) || 29.92;
+    const hum = parseFloat(document.getElementById('humidity')?.value) || 50;
+
+    // Wind Logic (OWC specialized widgets)
+    const owcWindSpd = parseFloat(document.getElementById('owc-wind-speed')?.value);
+    const owcWindAng = parseFloat(document.getElementById('owc-wind-dir')?.value);
+    const hudWindSpd = parseFloat(document.getElementById('wind-speed')?.value) || 0;
+
+    const windSpeed = !isNaN(owcWindSpd) ? owcWindSpd : hudWindSpd;
+    const windAngle = !isNaN(owcWindAng) ? owcWindAng : 90;
+
+    // --- UPGRADE: Inclination / LOS Angle ---
+    const owcAngle = parseFloat(document.getElementById('owc-angle')?.value) || 0;
+
+    const weather = { temp, pressure: press, humidity: hum, windSpeed, windAngle, da, inclination: owcAngle };
+
+    // 2. Gather profile (Priority: Active Batch -> HUD -> Defaults)
+    let velocity, zero, bc, scopeHeight = 1.75;
+    let sourceName = "SYSTEM DEFAULT";
+
+    // Unified Value Retrieval (Prioritize OWC inputs)
+    const hudMv = parseFloat(document.getElementById('owc-mv')?.value) || parseFloat(document.getElementById('velocity')?.value) || 2700;
+    const hudZero = parseFloat(document.getElementById('owc-zero')?.value) || parseFloat(document.getElementById('zero')?.value) || 100;
+    const hudBc = parseFloat(document.getElementById('owc-bc')?.value) || parseFloat(document.getElementById('g1')?.value) || 0.450;
+
+    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
+    const activeBatchId = localStorage.getItem('trc_active_batch_id');
+    const batch = batches.find(b => b.id.toString() === activeBatchId);
+
+    if (source === 'batch' && batch) {
+        velocity = batch.mv || batch.speed || hudMv;
+        zero = batch.zero || hudZero;
+        bc = batch.bc || hudBc;
+        sourceName = `AMMO: ${batch.name || 'BATCH'}`;
+    } else if (source === 'live' || source === 'hud') {
+        velocity = hudMv;
+        zero = hudZero;
+        bc = hudBc;
+        sourceName = (source === 'live') ? "LIVE SENSORS" : "MAIN HUD";
+    } else { // 'smart' mode - Priority: Active Batch > HUD
+        velocity = batch ? (batch.mv || batch.speed) : hudMv;
+        zero = batch ? (batch.zero || 100) : hudZero;
+        bc = batch ? batch.bc : hudBc;
+        sourceName = batch ? `AUTO: ${batch.name}` : "AUTO: HUD";
+    }
+
+    const profile = { velocity, zero, bc, scopeHeight };
+
+    return { profile, weather, sourceName };
+};
+
+window.generateQuickDope = function () {
+    const target = document.getElementById('dope-render-target');
+    if (target) {
+        target.classList.remove('animate-pulse-quick-dope');
+        void target.offsetWidth; // Force Reflow
+        target.classList.add('animate-pulse-quick-dope');
+
+        // Remove animation after 2 seconds
+        setTimeout(() => {
+            target.classList.remove('animate-pulse-quick-dope');
+        }, 2000);
+    }
+
+    try {
+        const source = document.getElementById('dope-source-select')?.value || 'smart';
+        const step = parseInt(document.getElementById('dope-step-select')?.value) || 50;
+        const maxRange = parseInt(document.getElementById('dope-max-select')?.value) || 1200;
+
+        // console.log(`[Brain] Generating Quick Dope via ${source.toUpperCase()} (Step: ${step}Y, Max: ${maxRange}Y)...`);
+
+        // 1. GATHER UNIFIED CONTEXT
+        const context = window.getTacticalContext(source);
+
+        // 2. Calculate
+        if (!window.BallisticEngine) {
+            throw new Error("Ballistic Engine Core Missing");
+        }
+
+        const data = window.BallisticEngine.calculateDropTable(context.profile, context.weather, step, maxRange);
+
+        // 3. Render
+        if (typeof window.renderDropTable === 'function') {
+            // Pass the full context to render so we have inclination/weather data
+            window.renderDropTable(data, context.sourceName, context.weather);
+            localStorage.setItem('trc_last_dope', JSON.stringify(data));
+        }
+
+        // 4. Log
+        if (typeof SessionLogger !== 'undefined') {
+            SessionLogger.add("USER", `Generated Dope [${source.toUpperCase()}]: ${context.profile.velocity}fps / ${context.profile.zero}y / ${context.profile.bc} BC`);
+        }
+
+        // 5. Switching
+        // Ensure we show the module since this is an explicit trigger
+        window.switchTacticalModule('quick-dope');
+
+    } catch (err) {
+        console.error("Quick Dope Error:", err);
+        // alert("System Error: " + err.message);
+    }
+};
+
+window.renderDropTable = function (data, sourceTitle = "QUICK DOPE", weatherContext = null) {
+    const container = document.getElementById('dope-render-target');
+    const titleEl = document.getElementById('dope-table-title');
+    if (!container) return;
+
+    // Get Current Wind for Meta-Header (Fallback if context missing)
+    const wSpeed = weatherContext ? weatherContext.windSpeed : (document.getElementById('owc-wind-speed')?.value || document.getElementById('wind-speed')?.value || 0);
+    const wDir = weatherContext ? weatherContext.windAngle : (document.getElementById('owc-wind-dir')?.value || document.getElementById('wind-dir')?.value || 270);
+    const losVar = weatherContext ? weatherContext.inclination : (document.getElementById('owc-angle')?.value || 0);
+
+    // Apply Title + Wind Meta + LOS Upgrade
+    if (titleEl) {
+        titleEl.innerHTML = `
+            <div class="flex flex-col items-center gap-2">
+                <div class="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded inline-block">
+                    <span class="text-[8px] text-zinc-500 font-black uppercase tracking-widest mr-2">SOURCE:</span>
+                    <span class="text-[10px] text-blue-400 font-black uppercase tracking-widest">${sourceTitle}</span>
+                </div>
+                <div class="flex gap-2">
+                    <div class="px-2 py-0.5 bg-orange-500/5 border border-orange-500/10 rounded flex gap-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter shadow-inner">
+                        <span>WIND: <b class="text-orange-400 font-black">${wDir}°</b></span>
+                        <span>SPD: <b class="text-orange-400 font-black">${wSpeed} MPH</b></span>
+                    </div>
+                    <div class="px-2 py-0.5 bg-zinc-800/40 border border-zinc-700/50 rounded flex items-center gap-1 text-[7px] font-black text-zinc-400 uppercase tracking-tighter">
+                         <span>LOS:</span>
+                         <span class="text-zinc-200 font-black">${losVar}°</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // Generate HTML with Mobile Optimization (Compact & Scrollable)
+    let html = `
+    <div class="w-full text-white pb-10 overflow-x-auto">
+        <table class="w-full text-left border-collapse min-w-[300px]">
+            <thead>
+                <tr class="bg-blue-900/40 text-[8px] text-blue-200 uppercase tracking-[0.2em]">
+                    <th class="p-1.5 border-b border-blue-500/20 text-center">RNG</th>
+                    <th class="p-1.5 border-b border-blue-500/20 text-white text-center">ELEV</th>
+                    <th class="p-1.5 border-b border-blue-500/20 text-orange-400 text-center">WIND</th>
+                    <th class="p-1.5 border-b border-blue-500/20 opacity-50 text-center">VEL</th>
+                </tr>
+            </thead>
+            <tbody class="text-xs font-mono text-zinc-100">
+    `;
+
+    data.forEach(row => {
+        const eVal = parseFloat(row.elevMil);
+        const eDir = eVal >= 0 ? 'U' : 'D';
+        const wVal = parseFloat(row.windMil);
+        const wDir = row.crossWind < 0 ? 'L' : 'R';
+        const dropIn = row.dropInches || (eVal * row.range * 0.036).toFixed(1);
+        const driftIn = row.windInches || (wVal * row.range * 0.036).toFixed(1);
+
+        html += `
+        <tr class="border-b border-white/5 hover:bg-white/10 transition-colors">
+            <td class="p-1.5 font-black text-center text-zinc-400">${row.range}</td>
+            <td class="p-1.5 text-white font-black text-center">
+                <div class="flex flex-col items-center">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-[8px] text-zinc-500 font-black">${eDir}</span>
+                        <span class="text-lg">${Math.abs(eVal).toFixed(1)}</span>
+                    </div>
+                    <span class="text-[7px] text-zinc-500 font-bold -mt-0.5 opacity-60">(${Math.abs(dropIn)}")</span>
+                </div>
+            </td>
+            <td class="p-1.5 text-orange-400 font-bold text-center">
+                <div class="flex flex-col items-center">
+                    <div class="flex items-baseline gap-1">
+                        <span class="text-[8px] opacity-40 font-black text-zinc-100">${wDir}</span>
+                        <span class="text-base">${wVal.toFixed(1)}</span>
+                    </div>
+                    <span class="text-[7px] opacity-40 font-bold -mt-0.5 italic">(${driftIn}")</span>
+                </div>
+            </td>
+            <td class="p-1.5 text-center text-[9px] opacity-40 italic font-medium align-middle">${row.velocity}</td>
+        </tr>
+        `;
+    });
+
+    html += `</tbody></table></div>`;
+    container.innerHTML = html;
+};
