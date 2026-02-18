@@ -51,23 +51,23 @@
     <link rel="stylesheet" href="style.css?v=3.8">
     <style>
         :root {
-            /* Core Theme Variables - Duplicated here for safety on mobile */
-            --dark-bg: #0f172a;
-            --panel-bg: #111827;
-            --text-primary: #f8fafc;
-            --text-secondary: #94a3b8;
-            --border-color: #334155;
-            --input-bg: rgba(255, 255, 255, 0.05);
-            --input-border: #4b5563;
+            /* High Visibility - Brighter Neutral Charcoal */
+            --dark-bg: #404040;
+            --panel-bg: #525252;
+            --text-primary: #ffffff;
+            --text-secondary: #e5e5e5;
+            --border-color: #737373;
+            --input-bg: #404040;
+            --input-border: #a3a3a3;
             --accent-color: #22c55e;
             --neon-green: #22c55e;
-            --input-text: #f8fafc;
-            --placeholder-color: #64748b;
+            --input-text: #ffffff;
+            --placeholder-color: #a3a3a3;
         }
 
         body {
-            background-color: #0f172a;
-            color: #f8fafc;
+            background-color: #404040;
+            color: #ffffff;
         }
 
         .input-field {
@@ -246,7 +246,7 @@
 </head>
 
 <body
-    class="bg-gray-800 text-gray-100 min-h-screen font-sans selection:bg-neon-green selection:text-black overflow-x-hidden">
+    class="bg-neutral-700 text-white min-h-screen font-sans selection:bg-neon-green selection:text-black overflow-x-hidden">
 
     <!-- Mobile View Toggle (Floating Action Button) -->
     <button id="mobileViewToggle"
@@ -257,8 +257,8 @@
     <div id="mainLayout" class="flex flex-col lg:flex-row min-h-screen lg:h-screen lg:overflow-hidden">
         <!-- LEFT PANEL: CONTROLS & INPUTS -->
         <aside
-            class="w-full lg:w-1/3 bg-gray-900 border-r border-gray-800 flex flex-col h-auto lg:h-full lg:overflow-hidden shadow-2xl relative z-10 transition-colors duration-300">
-            <div class="p-6 border-b border-gray-800 bg-gray-900 z-30 shrink-0 transition-colors duration-300">
+            class="w-full lg:w-1/3 bg-neutral-800 border-r border-neutral-600 flex flex-col h-auto lg:h-full lg:overflow-hidden shadow-2xl relative z-10 transition-colors duration-300">
+            <div class="p-6 border-b border-neutral-600 bg-neutral-800 z-30 shrink-0 transition-colors duration-300">
                 <div class="flex justify-between items-start">
                     <h1
                         class="text-2xl font-bold tracking-tighter text-neon-green uppercase flex items-center gap-2 relative">
@@ -267,18 +267,19 @@
                         <span class="text-sm text-gray-400 italic font-normal normal-case ml-1">ProVersion</span>
                     </h1>
                     <!-- Theme Toggle -->
-                    <div class="flex items-center gap-1 bg-gray-800/20 p-1 rounded-lg border border-gray-800">
+                    <div class="flex items-center gap-1 bg-neutral-700/60 p-1 rounded-lg border border-neutral-600">
                         <button onclick="window.setTheme('light')"
-                            class="p-1.5 rounded transition-all hover:bg-gray-700 group" title="Light Theme">
-                            <i data-lucide="sun" class="w-4 h-4 text-gray-500 group-hover:text-yellow-400"></i>
+                            class="p-1.5 rounded transition-all hover:bg-neutral-600 group" title="Light Theme">
+                            <i data-lucide="sun" class="w-4 h-4 text-neutral-300 group-hover:text-yellow-400"></i>
                         </button>
                         <button onclick="window.setTheme('dark')"
-                            class="p-1.5 rounded transition-all hover:bg-gray-700 group" title="Dark Background Theme">
-                            <i data-lucide="moon" class="w-4 h-4 text-gray-400 group-hover:text-white"></i>
+                            class="p-1.5 rounded transition-all hover:bg-neutral-600 group"
+                            title="Dark Background Theme">
+                            <i data-lucide="moon" class="w-4 h-4 text-neutral-200 group-hover:text-white"></i>
                         </button>
                     </div>
                 </div>
-                <p class="text-xs text-gray-500 mt-1 uppercase tracking-widest flex justify-between items-center">
+                <p class="text-xs text-neutral-300 mt-1 uppercase tracking-widest flex justify-between items-center">
                     <span>Ballistics & Environment Log</span>
                     <span id="save-status" class="text-neon-green font-bold text-[8px] animate-pulse"></span>
                 </p>
@@ -335,7 +336,7 @@
                                 EXPORT IMAGE
                             </button>
                             <button onclick="window.shareSession()"
-                                class="bg-black/20 hover:bg-cyan-900/40 border border-cyan-900/40 hover:border-cyan-500 rounded p-2 text-[10px] font-bold text-cyan-400 hover:text-white flex items-center justify-center gap-2 transition-all">
+                                class="bg-neutral-800/40 hover:bg-neutral-700/60 border border-neutral-600/50 rounded p-2 text-[10px] font-bold text-cyan-400 hover:text-white flex items-center justify-center gap-2 transition-all">
                                 <i data-lucide="share-2" class="w-4 h-4"></i>
                                 SHARE
                             </button>
@@ -350,7 +351,7 @@
                     <button id="deleteProfileBtn" class="hidden"></button>
 
                     <!-- Weapon Profiles Section -->
-                    <section class="space-y-3 border-t border-gray-800 pt-4">
+                    <section class="space-y-3 border-t border-neutral-600 pt-4">
                         <label class="section-label group flex items-center gap-2 cursor-pointer"
                             onclick="document.getElementById('weaponProfilesForm').classList.toggle('hidden')">
                             <i data-lucide="chevron-down" class="w-4 h-4"></i>
@@ -414,7 +415,7 @@
                             </div>
                             <!-- Mission Data Section (Hidden by default) -->
                             <div id="form-section-mission"
-                                class="col-span-2 pt-2 hidden bg-gray-900 p-2 rounded border border-blue-900/30">
+                                class="col-span-2 pt-2 hidden bg-neutral-800 p-2 rounded border border-blue-900/30">
                                 <label class="section-label text-blue-400">MISSION DATA</label>
                                 <div class="grid grid-cols-2 gap-2 mt-2">
                                     <input type="text" id="mission-id" class="input-field" placeholder="Mission ID">
@@ -611,7 +612,7 @@
                                 <label class="section-label">Grade Your Hold</label>
 
                                 <div
-                                    class="flex flex-col items-center gap-4 bg-black/40 border border-gray-800 p-6 rounded-lg">
+                                    class="flex flex-col items-center gap-4 bg-neutral-800/40 border border-neutral-600 p-6 rounded-lg">
                                     <span class="text-[10px] font-black text-gray-500 uppercase tracking-[0.2em]">Wind
                                         Call
                                         Dial</span>
@@ -620,7 +621,7 @@
                                     <div class="relative w-40 h-40 flex items-center justify-center">
                                         <!-- Outer Ring -->
                                         <div
-                                            class="absolute w-full h-full rounded-full border-2 border-gray-700 bg-gradient-to-br from-gray-900 to-black shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
+                                            class="absolute w-full h-full rounded-full border-2 border-neutral-600 bg-gradient-to-br from-neutral-800 to-neutral-900 shadow-[inset_0_2px_8px_rgba(0,0,0,0.8)]">
                                         </div>
 
                                         <!-- Position Markers (8 positions) -->
@@ -789,8 +790,7 @@
                                 </label>
 
                                 <!-- Timer Display -->
-                                <div
-                                    class="bg-[var(--input-bg)]/60 border border-[var(--input-border)] rounded-lg p-4 text-center">
+                                <div class="bg-neutral-800/60 border border-neutral-500 rounded-lg p-4 text-center">
                                     <div class="text-[10px] text-gray-500 uppercase font-bold mb-1">Total Session
                                         Time
                                     </div>
@@ -1238,7 +1238,7 @@
 
         <!-- RIGHT PANEL: PREVIEW -->
         <main id="previewPanel"
-            class="hidden lg:flex flex-col flex-1 bg-gray-900 overflow-y-auto p-4 lg:p-10 items-center justify-start lg:justify-center relative bg-grid-pattern transition-all duration-300 min-h-[500px]">
+            class="hidden lg:flex flex-col flex-1 bg-neutral-700 overflow-y-auto p-4 lg:p-10 items-center justify-start lg:justify-center relative bg-grid-pattern transition-all duration-300 min-h-[500px]">
 
             <!-- Mobile Preview Header -->
             <!-- Mobile Preview Header -->
@@ -1498,7 +1498,7 @@
         <div id="printSizeModal"
             class="fixed inset-0 bg-black/95 backdrop-blur-md z-[210] hidden flex items-center justify-center p-4">
             <div
-                class="bg-gray-900 border border-gray-700 w-full max-w-md rounded-xl shadow-[0_0_100px_rgba(37,99,235,0.2)] p-6">
+                class="bg-neutral-800 border border-neutral-500 w-full max-w-md rounded-xl shadow-[0_0_100px_rgba(37,99,235,0.2)] p-6">
                 <div class="flex items-center gap-3 mb-6">
                     <i data-lucide="printer" class="w-6 h-6 text-blue-400"></i>
                     <h2 class="text-xl font-bold uppercase tracking-tight text-[var(--text-primary)]">Select Print Size
@@ -1543,7 +1543,7 @@
                 </div>
 
                 <button onclick="closePrintModal()"
-                    class="w-full mt-6 bg-gray-800 hover:bg-gray-700 border border-gray-600 rounded-lg p-3 text-sm font-bold text-gray-400 hover:text-white transition-all">
+                    class="w-full mt-6 bg-neutral-700 hover:bg-neutral-600 border border-neutral-500 rounded-lg p-3 text-sm font-bold text-gray-400 hover:text-white transition-all">
                     Cancel
                 </button>
             </div>
@@ -1553,9 +1553,10 @@
         <div id="libraryModal"
             class="fixed inset-0 bg-black/95 backdrop-blur-md z-[300] hidden flex items-center justify-center p-4">
             <div
-                class="bg-gray-900 border border-gray-700 w-full max-w-5xl h-[90vh] rounded-xl shadow-[0_0_100px_rgba(34,197,94,0.1)] flex flex-col overflow-hidden">
+                class="bg-neutral-700 border border-neutral-500 w-full max-w-5xl h-[90vh] rounded-xl shadow-[0_0_100px_rgba(34,197,94,0.1)] flex flex-col overflow-hidden">
                 <!-- Header -->
-                <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-black/30 shrink-0">
+                <div
+                    class="p-4 border-b border-neutral-500 flex justify-between items-center bg-neutral-600/30 shrink-0">
                     <div class="flex items-center gap-3">
                         <i data-lucide="database" class="w-5 h-5 text-neon-green"></i>
                         <div>
@@ -1574,9 +1575,9 @@
                 <!-- Content Area -->
                 <div class="flex-1 flex flex-col lg:flex-row overflow-hidden">
                     <!-- Sidebar List -->
-                    <div
-                        class="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-gray-800 flex flex-col bg-black/20 shrink-0 h-1/3 lg:h-full">
-                        <div class="p-4 border-b border-gray-800 bg-gray-950/20">
+                    <div id="librarySidebar"
+                        class="w-full lg:w-80 border-b lg:border-b-0 lg:border-r border-neutral-500 flex flex-col bg-neutral-800/20 shrink-0 h-1/3 lg:h-full">
+                        <div class="p-4 border-b border-neutral-500 bg-neutral-900/20">
                             <p class="text-[10px] font-bold text-gray-600 uppercase tracking-widest">Saved
                                 Profiles</p>
                         </div>
@@ -1586,7 +1587,7 @@
                     </div>
 
                     <!-- Preview Pane -->
-                    <div class="flex-1 flex flex-col relative bg-gray-950">
+                    <div class="flex-1 flex flex-col relative bg-neutral-800">
                         <!-- Empty State -->
                         <div id="noSelection"
                             class="absolute inset-0 flex flex-col items-center justify-center text-center p-12">
@@ -1600,14 +1601,21 @@
                             <!-- Profile Header area -->
                             <div
                                 class="p-5 bg-gray-900/60 border-b border-gray-800 flex justify-between items-center shrink-0">
-                                <div class="min-w-0">
-                                    <h3 id="previewName"
-                                        class="text-2xl font-black text-white uppercase truncate leading-none mb-1">
-                                        ---</h3>
-                                    <p id="previewCaliber"
-                                        class="text-neon-green font-mono text-[10px] uppercase truncate tracking-wide">
-                                        ---
-                                    </p>
+                                <div class="flex items-center gap-4 min-w-0">
+                                    <!-- Mobile Back Button -->
+                                    <button onclick="window.closeProfilePreview()"
+                                        class="lg:hidden p-2 bg-neutral-800 border border-neutral-600 rounded-lg text-white">
+                                        <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                                    </button>
+                                    <div class="min-w-0">
+                                        <h3 id="previewName"
+                                            class="text-2xl font-black text-white uppercase truncate leading-none mb-1">
+                                            ---</h3>
+                                        <p id="previewCaliber"
+                                            class="text-neon-green font-mono text-[10px] uppercase truncate tracking-wide">
+                                            ---
+                                        </p>
+                                    </div>
                                 </div>
                                 <div class="flex items-center gap-4 shrink-0">
                                     <div class="flex bg-black/80 rounded border border-gray-700 p-0.5">
@@ -1778,9 +1786,9 @@
     <div id="intelHubModal"
         class="fixed inset-0 bg-black/95 backdrop-blur-md z-[200] hidden flex items-center justify-center p-0 md:p-4">
         <div
-            class="bg-gray-900 border border-gray-800 w-full max-w-4xl h-full md:h-[85vh] landscape:h-[95vh] rounded-none md:rounded-xl shadow-[0_0_100px_rgba(37,99,235,0.15)] flex flex-col overflow-hidden">
+            class="bg-neutral-700 border border-neutral-500 w-full max-w-4xl h-full md:h-[85vh] landscape:h-[95vh] rounded-none md:rounded-xl shadow-[0_0_100px_rgba(37,99,235,0.15)] flex flex-col overflow-hidden">
             <!-- Header -->
-            <div class="p-4 border-b border-gray-800 flex justify-between items-center bg-gray-900/30 shrink-0">
+            <div class="p-4 border-b border-neutral-500 flex justify-between items-center bg-neutral-600/30 shrink-0">
                 <div class="flex items-center gap-3">
                     <div
                         class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center shadow-[0_0_20px_rgba(37,99,235,0.4)]">
@@ -1799,7 +1807,7 @@
             </div>
 
             <!-- Tab Navigation -->
-            <div class="flex flex-nowrap border-b border-gray-800 bg-black/40 px-4 shrink-0 overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing custom-scrollbar touch-pan-x"
+            <div class="flex flex-nowrap border-b border-neutral-500 bg-neutral-800/40 px-4 shrink-0 overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing custom-scrollbar touch-pan-x"
                 style="-webkit-overflow-scrolling: touch;">
                 <button onclick="switchIntelTab('ai-advisor')" id="tab-ai-advisor"
                     class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-blue-500 text-blue-500 transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
@@ -2007,7 +2015,7 @@
 
                             <!-- Mode 1: Density Altitude (Modern) -->
                             <div id="owc-mode-da"
-                                class="flex justify-start items-center bg-black/20 rounded p-1 mb-1 gap-1">
+                                class="flex justify-start items-center bg-neutral-800/20 rounded p-1 mb-1 gap-1">
                                 <input type="number" id="owc-da" value="0"
                                     class="bg-transparent text-sm font-black text-blue-400 w-11 outline-none border-none focus:ring-0"
                                     placeholder="DA"
@@ -2019,13 +2027,15 @@
                             <!-- Mode 2: Altitude & Temp (Classic) - HIDDEN BY DEFAULT -->
                             <div id="owc-mode-alt" class="hidden flex flex-col gap-1">
                                 <div class="grid grid-cols-2 gap-1">
-                                    <div class="flex items-center justify-between bg-black/20 rounded px-1 py-0.5">
+                                    <div
+                                        class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
                                         <input type="number" id="owc-alt" value="0" placeholder="ALT"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
                                         <span class="text-[6px] font-bold text-zinc-500 mr-1">FT</span>
                                     </div>
-                                    <div class="flex items-center justify-between bg-black/20 rounded px-1 py-0.5">
+                                    <div
+                                        class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
                                         <input type="number" id="owc-temp" value="59" placeholder="TEMP"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
@@ -2033,13 +2043,15 @@
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-2 gap-1">
-                                    <div class="flex items-center justify-between bg-black/20 rounded px-1 py-0.5">
+                                    <div
+                                        class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
                                         <input type="number" id="owc-hum" value="50" placeholder="HUM"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
                                         <span class="text-[6px] font-bold text-zinc-500 mr-1">%</span>
                                     </div>
-                                    <div class="flex items-center justify-between bg-black/20 rounded px-1 py-0.5">
+                                    <div
+                                        class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
                                         <input type="number" id="owc-press" value="29.92" step="0.01" placeholder="PRES"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
@@ -2203,7 +2215,8 @@
                 <!-- 🌦️ LIVE WEATHER STATION TAB -->
                 <div id="intel-weather-station"
                     class="hidden h-full flex flex-col p-6 space-y-6 overflow-y-auto custom-scrollbar">
-                    <div class="flex justify-between items-center bg-zinc-900/50 p-4 rounded-xl border border-gray-800">
+                    <div
+                        class="flex justify-between items-center bg-neutral-600/50 p-4 rounded-xl border border-neutral-500">
                         <div>
                             <h3 class="text-xs font-black text-orange-500 uppercase tracking-[0.3em]">Live Weather
                                 Station</h3>
@@ -2219,28 +2232,28 @@
                     <div class="grid grid-cols-2 gap-4">
                         <!-- Temp Widget -->
                         <div
-                            class="bg-black/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                            class="bg-neutral-800/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
                             <i data-lucide="thermometer" class="w-6 h-6 text-red-500 mb-2"></i>
                             <span class="text-[8px] text-zinc-600 font-black uppercase mb-1">Temperature</span>
                             <span id="ws-temp" class="text-3xl font-black text-white italic">--°F</span>
                         </div>
                         <!-- Humidity Widget -->
                         <div
-                            class="bg-black/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                            class="bg-neutral-800/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
                             <i data-lucide="droplets" class="w-6 h-6 text-blue-500 mb-2"></i>
                             <span class="text-[8px] text-zinc-600 font-black uppercase mb-1">Humidity</span>
                             <span id="ws-hum" class="text-3xl font-black text-white italic">--%</span>
                         </div>
                         <!-- Pressure Widget -->
                         <div
-                            class="bg-black/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                            class="bg-neutral-800/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
                             <i data-lucide="gauge" class="w-6 h-6 text-emerald-500 mb-2"></i>
                             <span class="text-[8px] text-zinc-600 font-black uppercase mb-1">Station Pressure</span>
                             <span id="ws-press" class="text-3xl font-black text-white italic">-- IN</span>
                         </div>
                         <!-- Wind Widget -->
                         <div
-                            class="bg-black/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
+                            class="bg-neutral-800/20 border border-white/5 p-4 rounded-xl flex flex-col items-center justify-center text-center">
                             <i data-lucide="wind" class="w-6 h-6 text-blue-400 mb-2"></i>
                             <span class="text-[8px] text-zinc-600 font-black uppercase mb-1">Wind Conditions</span>
                             <span id="ws-wind" class="text-xl font-black text-white italic">-- MPH @ --°</span>
@@ -2266,7 +2279,7 @@
                         </div>
                     </div>
 
-                    <div class="bg-zinc-900/30 border border-gray-800 p-4 rounded-xl space-y-3">
+                    <div class="bg-neutral-600/30 border border-neutral-500 p-4 rounded-xl space-y-3">
                         <div class="flex justify-between items-center text-[10px] font-bold">
                             <span class="text-zinc-500 uppercase">GPS Location</span>
                             <span id="ws-coords" class="text-blue-400 font-mono animate-pulse">ACQUIRING GPS
@@ -2276,7 +2289,7 @@
                             <span class="text-zinc-500 uppercase">Last Updated</span>
                             <span id="ws-timestamp" class="text-zinc-400 font-mono">--:--:--</span>
                         </div>
-                        <div class="pt-2 border-t border-gray-800">
+                        <div class="pt-2 border-t border-neutral-500">
                             <p class="text-[8px] text-zinc-600 leading-relaxed italic">
                                 * Data sourced from Open-Meteo API using high-precision GPS triangulation.
                                 Station Pressure is derived directly for use in high-fidelity ballistics.
@@ -2342,19 +2355,19 @@
 
                 <!-- TACTICAL MAP HUB (RANGE-TO-PIN) -->
                 <div id="intel-tactical-map" class="hidden space-y-4">
-                    <div class="flex items-center justify-between px-4 pt-2">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 pt-2 gap-3">
                         <div class="flex items-center gap-2">
                             <i data-lucide="map" class="w-4 h-4 text-blue-500"></i>
                             <span class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Map Range
                                 Analysis</span>
                         </div>
-                        <div class="flex gap-2">
+                        <div class="flex flex-wrap gap-2">
                             <button onclick="window.toggleMapUnits()"
-                                class="bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-[9px] font-black px-3 py-1 rounded uppercase transition-all flex items-center gap-1.5">
+                                class="bg-neutral-600 hover:bg-neutral-500 text-white text-[9px] font-black px-3 py-1 rounded uppercase transition-all flex items-center gap-1.5 border border-neutral-500">
                                 <i data-lucide="ruler" class="w-3 h-3"></i> YDS/M
                             </button>
                             <button onclick="window.toggleMapPathMode()" id="btn-map-link"
-                                class="bg-zinc-800 hover:bg-zinc-700 text-zinc-400 text-[9px] font-black px-3 py-1 rounded uppercase transition-all flex items-center gap-1.5 border border-white/5">
+                                class="bg-neutral-600 hover:bg-neutral-500 text-white text-[9px] font-black px-3 py-1 rounded uppercase transition-all flex items-center gap-1.5 border border-neutral-500">
                                 <i data-lucide="circle-dot" class="w-3 h-3"></i> RADIAL
                             </button>
                             <button onclick="window.clearMapTargets()"
@@ -2369,11 +2382,11 @@
                     </div>
                     <div class="px-4">
                         <div id="tactical-map-container"
-                            class="w-full h-[450px] rounded-2xl border-2 border-white/10 overflow-hidden shadow-2xl relative bg-[#0c0a09]">
+                            class="w-full h-[450px] rounded-2xl border-2 border-neutral-500/50 overflow-hidden shadow-2xl relative bg-neutral-900">
                             <!-- Map will be initialized here -->
                         </div>
                         <div
-                            class="mt-4 bg-zinc-900/50 border border-white/5 p-4 rounded-xl flex items-center justify-between">
+                            class="mt-4 bg-neutral-800/50 border border-neutral-500 p-4 rounded-xl flex items-center justify-between">
                             <div class="flex items-center gap-4">
                                 <i data-lucide="ruler" class="w-8 h-8 text-blue-500/50"></i>
                                 <div>
@@ -2576,25 +2589,37 @@
                         </div>
 
                         <!-- HUD Footer Controls -->
-                        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-4 z-20">
-                            <div class="flex bg-black/60 rounded-lg p-1 border border-current/20 scale-90">
-                                <button onclick="setCompassGlow('amber')"
-                                    class="p-2 rounded hover:bg-white/10 transition-colors">
-                                    <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                        <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 z-20">
+                            <div class="flex gap-4">
+                                <button onclick="window.calibrateCompassOffset()"
+                                    class="bg-orange-600 hover:bg-orange-500 text-white font-black px-6 py-3 rounded-lg text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 border-2 border-white/10 flex items-center gap-2">
+                                    <i data-lucide="compass" class="w-4 h-4"></i> SET NORTH
                                 </button>
-                                <button onclick="setCompassGlow('red')"
-                                    class="p-2 rounded hover:bg-white/10 transition-colors">
-                                    <div class="w-4 h-4 bg-red-600 rounded-full"></div>
-                                </button>
-                                <button onclick="setCompassGlow('green')"
-                                    class="p-2 rounded hover:bg-white/10 transition-colors">
-                                    <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+                                <button onclick="window.resetCompassOffset()"
+                                    class="bg-zinc-800 hover:bg-zinc-700 text-zinc-400 font-black px-4 py-3 rounded-lg text-xs uppercase tracking-widest transition-all active:scale-95 border border-white/5">
+                                    RESET
                                 </button>
                             </div>
-                            <button onclick="syncCompassToOWC()"
-                                class="bg-blue-600 hover:bg-blue-500 text-white font-black px-6 py-2 rounded-lg text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 border-2 border-white/10">
-                                SYNC TO OWC
-                            </button>
+                            <div class="flex gap-4">
+                                <div class="flex bg-black/60 rounded-lg p-1 border border-current/20 scale-90">
+                                    <button onclick="setCompassGlow('amber')"
+                                        class="p-2 rounded hover:bg-white/10 transition-colors">
+                                        <div class="w-4 h-4 bg-orange-500 rounded-full"></div>
+                                    </button>
+                                    <button onclick="setCompassGlow('red')"
+                                        class="p-2 rounded hover:bg-white/10 transition-colors">
+                                        <div class="w-4 h-4 bg-red-600 rounded-full"></div>
+                                    </button>
+                                    <button onclick="setCompassGlow('green')"
+                                        class="p-2 rounded hover:bg-white/10 transition-colors">
+                                        <div class="w-4 h-4 bg-emerald-500 rounded-full"></div>
+                                    </button>
+                                </div>
+                                <button onclick="syncCompassToOWC()"
+                                    class="bg-blue-600 hover:bg-blue-500 text-white font-black px-6 py-3 rounded-lg text-xs uppercase tracking-widest transition-all shadow-xl active:scale-95 border-2 border-white/10">
+                                    SYNC TO OWC
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Scan Line Effect -->
@@ -2967,10 +2992,43 @@
                                 </div>
                             </div>
 
+                            <!-- Precision Nudge & Reticle -->
+                            <div class="bg-zinc-800 p-2 rounded col-span-2">
+                                <label class="text-[8px] text-zinc-500 uppercase font-black">Digital MIL-Caliper /
+                                    Reticle</label>
+                                <div class="flex gap-2 mt-1">
+                                    <div class="flex bg-black/40 rounded p-1 border border-white/5 gap-2">
+                                        <button onclick="window.nudgeMeasure(-1)"
+                                            class="p-1 hover:bg-white/10 rounded text-blue-400">
+                                            <i data-lucide="minus-square" class="w-4 h-4"></i>
+                                        </button>
+                                        <button onclick="window.nudgeMeasure(1)"
+                                            class="p-1 hover:bg-white/10 rounded text-blue-400">
+                                            <i data-lucide="plus-square" class="w-4 h-4"></i>
+                                        </button>
+                                    </div>
+                                    <select id="reticle-type-select" onchange="window.updateReticleType(this.value)"
+                                        class="flex-1 bg-black/40 text-[9px] text-white font-black uppercase border border-white/10 rounded px-2 outline-none focus:border-blue-500">
+                                        <option value="box">Standard Box</option>
+                                        <option value="mildot">MIL-Dot (Classic)</option>
+                                        <option value="aprs11">Athlon APRS11</option>
+                                    </select>
+                                    <button id="poi-tag-btn" onclick="window.togglePOITagging()"
+                                        class="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 px-3 rounded uppercase text-[8px] font-black transition-all">
+                                        <i data-lucide="map-pin" class="w-3 h-3 inline mr-1"></i> POI
+                                    </button>
+                                </div>
+                            </div>
+
                             <!-- Object Size (Calibrated) -->
                             <div class="bg-zinc-800 p-2 rounded col-span-2">
-                                <label class="text-[8px] text-zinc-500 uppercase font-black">Ref Calibrated / Object
-                                    Size (in)</label>
+                                <div class="flex justify-between items-center">
+                                    <label class="text-[8px] text-zinc-500 uppercase font-black">Ref Calibrated / Object
+                                        Size (in)</label>
+                                    <button onclick="window.requestFOVCal()"
+                                        class="text-[7px] text-purple-400 hover:text-white underline uppercase">Calibrate
+                                        FOV</button>
+                                </div>
                                 <div class="flex items-center gap-2 mt-1">
                                     <div id="object-size-display" class="text-purple-400 text-lg font-black">--</div>
                                     <div id="cal-status" class="text-[7px] font-black text-purple-300">NO CAL</div>
@@ -3257,7 +3315,7 @@
                                         <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">TEMP
                                             (°F)</span>
                                         <div
-                                            class="flex items-center bg-black/40 rounded border border-gray-800 overflow-hidden">
+                                            class="flex items-center bg-neutral-800/40 rounded border border-neutral-500 overflow-hidden">
                                             <button id="sim-temp-minus"
                                                 class="p-2 hover:bg-[var(--input-bg)] text-zinc-400"><i
                                                     data-lucide="minus" class="w-3 h-3"></i></button>
@@ -3272,7 +3330,7 @@
                                         <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">HUM
                                             (%)</span>
                                         <div
-                                            class="flex items-center bg-black/40 rounded border border-gray-800 overflow-hidden">
+                                            class="flex items-center bg-neutral-800/40 rounded border border-neutral-500 overflow-hidden">
                                             <button id="sim-hum-minus"
                                                 class="p-2 hover:bg-[var(--input-bg)] text-zinc-400"><i
                                                     data-lucide="minus" class="w-3 h-3"></i></button>
@@ -3287,7 +3345,7 @@
                                         <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">PRESS
                                             (ALT)</span>
                                         <div
-                                            class="flex items-center bg-black/40 rounded border border-gray-800 overflow-hidden">
+                                            class="flex items-center bg-neutral-800/40 rounded border border-neutral-500 overflow-hidden">
                                             <button id="sim-press-minus"
                                                 class="p-2 hover:bg-[var(--input-bg)] text-zinc-400"><i
                                                     data-lucide="minus" class="w-3 h-3"></i></button>
@@ -3320,7 +3378,7 @@
                                             class="text-[9px] font-black text-[var(--input-text)] uppercase tracking-widest">
                                             ---</p>
                                     </div>
-                                    <div class="text-center border-l border-gray-800 pl-4">
+                                    <div class="text-center border-l border-neutral-500 pl-4">
                                         <p class="text-[6px] text-zinc-600 font-black uppercase">Impact</p>
                                         <p id="traj-impact"
                                             class="text-[9px] font-black text-[var(--input-text)] uppercase tracking-widest">
@@ -3345,7 +3403,7 @@
                             <!-- ROW 1: SELECTORS (CENTERED) -->
                             <div class="flex flex-wrap justify-center items-center gap-3">
                                 <div
-                                    class="flex items-center gap-1 bg-black/40 px-3 py-2 rounded-lg border border-white/5 shadow-inner">
+                                    class="flex items-center gap-1 bg-neutral-800/40 px-3 py-2 rounded-lg border border-neutral-500/20 shadow-inner">
                                     <span class="text-[7px] text-zinc-500 uppercase font-black">DATA:</span>
                                     <select id="dope-source-select" onchange="window.generateQuickDope()"
                                         class="bg-transparent text-blue-400 text-[9px] font-black uppercase outline-none cursor-pointer">
@@ -3356,7 +3414,7 @@
                                     </select>
                                 </div>
                                 <div
-                                    class="flex items-center gap-1 bg-black/40 px-3 py-2 rounded-lg border border-white/5 shadow-inner">
+                                    class="flex items-center gap-1 bg-neutral-800/40 px-3 py-2 rounded-lg border border-neutral-500/20 shadow-inner">
                                     <span class="text-[7px] text-zinc-500 uppercase font-black">STEP:</span>
                                     <select id="dope-step-select" onchange="window.generateQuickDope()"
                                         class="bg-transparent text-orange-400 text-[9px] font-black uppercase outline-none cursor-pointer">
@@ -3368,7 +3426,7 @@
                                     </select>
                                 </div>
                                 <div
-                                    class="flex items-center gap-1 bg-black/40 px-3 py-2 rounded-lg border border-white/5 shadow-inner">
+                                    class="flex items-center gap-1 bg-neutral-800/40 px-3 py-2 rounded-lg border border-neutral-500/20 shadow-inner">
                                     <span class="text-[7px] text-zinc-500 uppercase font-black">MAX:</span>
                                     <select id="dope-max-select" onchange="window.generateQuickDope()"
                                         class="bg-transparent text-emerald-400 text-[9px] font-black uppercase outline-none cursor-pointer">
@@ -3402,7 +3460,7 @@
 
                         <!-- DOPE VAULT MODAL -->
                         <div id="dopeVaultModal"
-                            class="hidden fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col p-4 md:p-8 overflow-hidden">
+                            class="hidden fixed inset-0 z-[100] bg-neutral-900/95 backdrop-blur-xl flex flex-col p-4 md:p-8 overflow-hidden">
 
                             <!-- Header -->
                             <div class="flex justify-between items-start mb-6">
@@ -3463,7 +3521,7 @@
                         </style>
 
                         <div id="quick-dope-preview"
-                            class="overflow-y-auto custom-scrollbar bg-black border border-white/10 rounded-xl p-4 min-h-[500px]">
+                            class="overflow-y-auto custom-scrollbar bg-neutral-800 border border-neutral-500 rounded-xl p-4 min-h-[500px]">
                             <div id="dope-table-title" class="mb-4 text-center flex flex-col items-center gap-2"></div>
                             <!-- STANDING ORDER DOPE -->
                             <div class="w-full text-white pb-10" id="dope-render-target">
@@ -3566,7 +3624,7 @@
                     class="hidden h-full flex flex-col overflow-y-auto landscape:grid landscape:grid-cols-2 landscape:gap-4 landscape:overflow-hidden custom-scrollbar pb-20">
                     <!-- STICKY SCOPE HEADER -->
                     <div
-                        class="sticky top-0 z-30 bg-gray-900 border-b border-gray-800 pb-2 landscape:static landscape:h-full landscape:flex landscape:flex-col landscape:border-r landscape:border-gray-800 landscape:pr-4">
+                        class="sticky top-0 z-30 bg-neutral-800 border-b border-neutral-500 pb-2 landscape:static landscape:h-full landscape:flex landscape:flex-col landscape:border-r landscape:border-neutral-500 landscape:pr-4">
                         <div class="flex justify-between items-center px-4 py-2">
                             <h3
                                 class="text-[10px] font-black text-orange-500 uppercase tracking-widest flex items-center gap-2">
@@ -3591,7 +3649,7 @@
 
                         <!-- Canvas Container -->
                         <div
-                            class="relative bg-black mx-4 rounded-xl border-2 border-gray-800 overflow-hidden shadow-inner group landscape:mx-0 landscape:w-full landscape:h-auto landscape:aspect-video">
+                            class="relative bg-black mx-4 rounded-xl border-2 border-neutral-500 overflow-hidden shadow-inner group landscape:mx-0 landscape:w-full landscape:h-auto landscape:aspect-video">
                             <!-- Scope Ring Effect -->
                             <div
                                 class="absolute inset-0 rounded-xl pointer-events-none shadow-[inset_0_0_50px_rgba(0,0,0,0.8)] z-10">
@@ -3632,12 +3690,12 @@
                         class="flex-1 overflow-y-auto p-4 space-y-6 custom-scrollbar landscape:h-full landscape:overflow-y-auto w-full">
 
                         <!-- Controls -->
-                        <div class="space-y-4 bg-zinc-900/50 p-4 rounded-xl border border-gray-800">
+                        <div class="space-y-4 bg-neutral-600/50 p-4 rounded-xl border border-neutral-500">
                             <!-- Mode Toggle -->
                             <div class="flex items-center justify-between mb-2">
                                 <span class="text-[10px] font-black text-zinc-400 uppercase tracking-widest">Simulator
                                     Mode</span>
-                                <div class="flex bg-gray-900 p-1 rounded-lg border border-gray-800">
+                                <div class="flex bg-neutral-600 p-1 rounded-lg border border-neutral-500">
                                     <button id="spotter-mode-auto"
                                         class="px-3 py-1 text-[9px] font-black rounded-md bg-neon-green text-black transition-all">AUTO</button>
                                     <button id="spotter-mode-manual"
@@ -3681,7 +3739,7 @@
                                             <input type="number" id="spotter-manual-elev" step="0.25" value="0.00"
                                                 class="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded h-8 text-[var(--input-text)] font-mono text-center focus:border-neon-green focus:outline-none text-xs">
                                             <button id="spotter-manual-elev-plus"
-                                                class="w-8 h-8 bg-[var(--input-bg)] rounded border border-gray-800 text-[var(--input-text)] font-black hover:bg-zinc-700">+</button>
+                                                class="w-8 h-8 bg-[var(--input-bg)] rounded border border-neutral-500 text-[var(--input-text)] font-black hover:bg-zinc-700">+</button>
                                         </div>
                                     </div>
                                     <!-- Windage Dial -->
@@ -3695,7 +3753,7 @@
                                             <input type="number" id="spotter-manual-wind" step="0.25" value="0.00"
                                                 class="flex-1 bg-[var(--input-bg)] border border-[var(--input-border)] rounded h-8 text-[var(--input-text)] font-mono text-center focus:border-blue-500 focus:outline-none text-xs">
                                             <button id="spotter-manual-wind-plus"
-                                                class="w-8 h-8 bg-[var(--input-bg)] rounded border border-gray-800 text-[var(--input-text)] font-black hover:bg-zinc-700">+</button>
+                                                class="w-8 h-8 bg-[var(--input-bg)] rounded border border-neutral-500 text-[var(--input-text)] font-black hover:bg-zinc-700">+</button>
                                         </div>
                                     </div>
                                 </div>
@@ -3713,7 +3771,7 @@
                             </div>
 
                             <!-- H-MIL RANGE SIMULATOR (UKD TRAINER) -->
-                            <div class="mt-6 pt-4 border-t border-gray-800 space-y-4">
+                            <div class="mt-6 pt-4 border-t border-neutral-500 space-y-4">
                                 <div class="flex items-center justify-between">
                                     <h4
                                         class="text-[10px] font-black text-[var(--input-text)] uppercase tracking-widest flex items-center gap-2">
@@ -3744,28 +3802,28 @@
                                             <div class="grid grid-cols-3 gap-1">
                                                 <div class="col-start-2">
                                                     <button onclick="window.nudgeHMIL('up')"
-                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-gray-800">
+                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-neutral-500">
                                                         <i data-lucide="chevron-up"
                                                             class="w-3 h-3 text-[var(--input-text)]"></i>
                                                     </button>
                                                 </div>
                                                 <div class="row-start-2 col-start-1">
                                                     <button onclick="window.nudgeHMIL('left')"
-                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-gray-800">
+                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-neutral-500">
                                                         <i data-lucide="chevron-left"
                                                             class="w-3 h-3 text-[var(--input-text)]"></i>
                                                     </button>
                                                 </div>
                                                 <div class="row-start-2 col-start-2">
                                                     <button onclick="window.nudgeHMIL('down')"
-                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-gray-800">
+                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-neutral-500">
                                                         <i data-lucide="chevron-down"
                                                             class="w-3 h-3 text-[var(--input-text)]"></i>
                                                     </button>
                                                 </div>
                                                 <div class="row-start-2 col-start-3">
                                                     <button onclick="window.nudgeHMIL('right')"
-                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-gray-800">
+                                                        class="w-full aspect-square bg-[var(--input-bg)] hover:bg-zinc-700 rounded flex items-center justify-center border border-neutral-500">
                                                         <i data-lucide="chevron-right"
                                                             class="w-3 h-3 text-[var(--input-text)]"></i>
                                                     </button>
@@ -3781,7 +3839,7 @@
                                                 Distance
                                                 (YDS)</label>
                                             <input type="number" id="hmil-user-dist" placeholder="000"
-                                                class="w-full bg-black border border-gray-800 rounded h-10 text-orange-500 font-mono text-center focus:border-orange-500 outline-none text-sm font-black">
+                                                class="w-full bg-black border border-neutral-500 rounded h-10 text-orange-500 font-mono text-center focus:border-orange-500 outline-none text-sm font-black">
                                         </div>
                                         <div class="grid grid-cols-1 gap-1">
                                             <button onclick="window.spawnHMILTarget()"
@@ -3799,7 +3857,7 @@
                                 <!-- Formula & Verification -->
                                 <div class="space-y-2">
                                     <button onclick="window.verifyHMILSolution()"
-                                        class="w-full bg-[var(--input-bg)] hover:bg-zinc-700 border border-gray-800 text-zinc-300 font-black py-3 rounded-lg text-[9px] uppercase tracking-widest transition-all flex items-center justify-center gap-2">
+                                        class="w-full bg-neutral-600 hover:bg-neutral-500 border border-neutral-500 text-zinc-300 font-black py-3 rounded-lg text-[9px] uppercase tracking-widest transition-all flex items-center justify-center gap-2">
                                         <i data-lucide="calculator" class="w-3.5 h-3.5"></i>
                                         Verify Solution & Reveal Math
                                     </button>
@@ -3811,10 +3869,9 @@
                                 </div>
 
                                 <!-- Formula Table -->
-                                <div
-                                    class="bg-[var(--input-bg)]/40 border border-[var(--input-border)] rounded overflow-hidden">
+                                <div class="bg-neutral-800/40 border border-neutral-500 rounded overflow-hidden">
                                     <table class="w-full text-[8px] text-zinc-500 uppercase font-black">
-                                        <thead class="bg-zinc-900/50 border-b border-gray-800">
+                                        <thead class="bg-neutral-600/50 border-b border-neutral-500">
                                             <tr>
                                                 <th class="p-1 px-2 text-left">UNIT</th>
                                                 <th class="p-1 text-left">RANGE FORMULA (YARDS)</th>
@@ -3846,7 +3903,7 @@
 
                     <!-- Footer -->
                     <div
-                        class="p-4 bg-[var(--input-bg)]/40 border-b border-[var(--input-border)] flex justify-between items-center text-[10px] text-gray-500 font-mono shrink-0">
+                        class="p-4 bg-neutral-800/40 border-b border-neutral-500 flex justify-between items-center text-[10px] text-gray-500 font-mono shrink-0">
                         <span>SYSTEM VERSION 1.0 // ADVISOR ONLINE</span>
                         <span class="text-blue-900 font-black animate-pulse">● SIGNAL SECURE</span>
                     </div>
@@ -3855,13 +3912,12 @@
 
             <!-- Ballistic Library Modal (Secondary) -->
             <div id="weaponProfileModal"
-                class="fixed inset-0 bg-black/80 backdrop-blur-sm z-[250] flex items-center justify-center p-4 hidden">
+                class="fixed inset-0 bg-neutral-900/80 backdrop-blur-sm z-[250] flex items-center justify-center p-4 hidden">
                 <div
-                    class="bg-[var(--panel-bg)] border border-[var(--input-border)] rounded-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
+                    class="bg-neutral-700 border border-neutral-500 rounded-lg w-full max-w-md max-h-[80vh] flex flex-col shadow-2xl">
                     <!-- Header -->
-                    <div class="bg-[var(--input-bg)]/40 border-b border-[var(--input-border)]">
-                        <h3
-                            class="text-sm font-bold text-[var(--text-primary)] uppercase tracking-wider flex items-center gap-2">
+                    <div class="bg-neutral-600/40 border-b border-neutral-500 p-4 flex justify-between items-center">
+                        <h3 class="text-sm font-bold text-white uppercase tracking-wider flex items-center gap-2">
                             <i data-lucide="library" class="w-4 h-4 text-neon-green"></i>
                             Ballistic Library
                         </h3>
@@ -3881,35 +3937,35 @@
                             </label>
                             <div class="grid grid-cols-2 gap-2">
                                 <button onclick="setCardModel('standard')" id="card-model-standard"
-                                    class="card-model-btn p-2 rounded-lg border border-gray-700 bg-black/40 text-left transition-all hover:border-neon-green hover:bg-neon-green/5">
+                                    class="card-model-btn p-2 rounded-lg border border-neutral-600 bg-neutral-800/40 text-left transition-all hover:border-neon-green hover:bg-neon-green/5">
                                     <p class="text-[10px] font-bold text-[var(--text-primary)] uppercase">The
                                         Tactical</p>
                                     <p class="text-[8px] text-gray-500 uppercase tracking-tighter">
                                         Standard 2x3 Dope</p>
                                 </button>
                                 <button onclick="setCardModel('recon')" id="card-model-recon"
-                                    class="card-model-btn p-2 rounded-lg border border-gray-700 bg-black/40 text-left transition-all hover:border-blue-500 hover:bg-blue-500/5">
+                                    class="card-model-btn p-2 rounded-lg border border-neutral-600 bg-neutral-800/40 text-left transition-all hover:border-yellow-500 hover:bg-yellow-500/5">
                                     <p class="text-[10px] font-bold text-[var(--text-primary)] uppercase">The Recon
                                     </p>
                                     <p class="text-[8px] text-gray-500 uppercase tracking-tighter">
                                         Long Range Prec</p>
                                 </button>
                                 <button onclick="setCardModel('challenger')" id="card-model-challenger"
-                                    class="card-model-btn p-2 rounded-lg border border-gray-700 bg-black/40 text-left transition-all hover:border-purple-500 hover:bg-purple-500/5">
+                                    class="card-model-btn p-2 rounded-lg border border-neutral-600 bg-neutral-800/40 text-left transition-all hover:border-purple-500 hover:bg-purple-500/5">
                                     <p class="text-[10px] font-bold text-[var(--text-primary)] uppercase">The
                                         Challenger</p>
                                     <p class="text-[8px] text-gray-500 uppercase tracking-tighter">
                                         Match & Stage</p>
                                 </button>
                                 <button onclick="setCardModel('stalker')" id="card-model-stalker"
-                                    class="card-model-btn p-2 rounded-lg border border-gray-700 bg-black/40 text-left transition-all hover:border-orange-500 hover:bg-orange-500/5">
+                                    class="card-model-btn p-2 rounded-lg border border-neutral-600 bg-neutral-800/40 text-left transition-all hover:border-orange-500 hover:bg-orange-500/5">
                                     <p class="text-[10px] font-bold text-[var(--text-primary)] uppercase">The
                                         Stalker</p>
                                     <p class="text-[8px] text-gray-500 uppercase tracking-tighter">
                                         Hunter Essentials</p>
                                 </button>
                                 <button onclick="setCardModel('spotter')" id="card-model-spotter"
-                                    class="col-span-2 card-model-btn p-2 rounded-lg border border-gray-700 bg-black/40 text-left transition-all hover:border-yellow-500 hover:bg-yellow-500/5">
+                                    class="col-span-2 card-model-btn p-2 rounded-lg border border-neutral-600 bg-neutral-800/40 text-left transition-all hover:border-yellow-500 hover:bg-yellow-500/5">
                                     <p class="text-[10px] font-bold text-[var(--text-primary)] uppercase text-center">
                                         The Spotter Intel Card</p>
                                     <p class="text-[8px] text-gray-500 uppercase tracking-tighter text-center">
@@ -3919,7 +3975,7 @@
 
                             <!-- Live Model Preview -->
                             <div
-                                class="bg-[var(--input-bg)] border border-[var(--input-border)] p-4 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden group">
+                                class="bg-neutral-800 border border-neutral-500 p-4 flex flex-col items-center justify-center min-h-[160px] relative overflow-hidden group">
                                 <div class="absolute top-2 left-2 flex items-center gap-1 opacity-20">
                                     <div class="w-1 h-1 bg-neon-green rounded-full animate-pulse">
                                     </div>
@@ -3990,7 +4046,7 @@
                         if (container && !document.getElementById('map-debug-overlay')) {
                             const overlay = document.createElement('div');
                             overlay.id = 'map-debug-overlay';
-                            overlay.className = 'absolute inset-0 z-[9999] pointer-events-none p-4 font-mono text-xs text-green-400 bg-black/80 overflow-auto border border-green-500';
+                            overlay.className = 'absolute inset-0 z-[9999] pointer-events-none p-4 font-mono text-[10px] text-green-400 bg-black/10 overflow-auto border border-green-500/30';
                             overlay.innerHTML = '<div class="font-bold text-lg mb-2">MAP DIAGNOSTICS</div>';
                             container.appendChild(overlay);
                             log("Diagnostics started...");

@@ -333,13 +333,12 @@ document.addEventListener('DOMContentLoaded', () => {
         // Re-populate data into new elements
         window.refreshAllDisplays();
 
-        // Re-draw Reticles if they exist (Standard Mode)
-        if (templateKey === 'standard' && typeof window.drawReticles === 'function') {
-            setTimeout(window.drawReticles, 50);
-        }
-        // Re-draw Reticles (Sniper Mode/SWAT Mode if they use canvases)
-        if ((templateKey === 'sniper' || templateKey === 'swat') && typeof window.drawReticles === 'function') {
-            setTimeout(window.drawReticles, 50);
+        // Re-draw Reticles (Using Integrated Logic)
+        if (templateKey === 'standard' || templateKey === 'sniper' || templateKey === 'swat') {
+            window.initTargetCanvas('canvas-hold', 'hold');
+            window.initTargetCanvas('canvas-shot', 'shot');
+            window.updateAllCanvases('hold');
+            window.updateAllCanvases('shot');
         }
     };
 
@@ -477,7 +476,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Register this canvas for sync updates
         if (!window.targetCanvasRegistry[type]) window.targetCanvasRegistry[type] = [];
-        window.targetCanvasRegistry[type].push({ canvas, ctx, width, height, centerX, centerY });
+        const exists = window.targetCanvasRegistry[type].some(item => item.canvas.id === canvasId);
+        if (!exists) {
+            window.targetCanvasRegistry[type].push({ canvas, ctx, width, height, centerX, centerY });
+        }
 
         canvas.addEventListener('pointerdown', (e) => {
             const rect = canvas.getBoundingClientRect();
@@ -890,6 +892,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (window.lucide) lucide.createIcons();
     };
 
+    window.closeProfilePreview = function () {
+        const profilePreview = document.getElementById('profilePreview');
+        if (profilePreview) {
+            profilePreview.classList.add('hidden');
+            const container = profilePreview.closest('.flex-1.flex.flex-col.lg\\:flex-row.overflow-hidden');
+            if (container) {
+                container.classList.remove('mobile-preview-active');
+            }
+        }
+    };
+
     window.previewProfile = function (name) {
         const ps = window.getProfiles();
         const data = ps[name];
@@ -899,7 +912,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emptyState) emptyState.classList.add('hidden');
 
         const profilePreview = document.getElementById('profilePreview');
-        if (profilePreview) profilePreview.classList.remove('hidden');
+        if (profilePreview) {
+            profilePreview.classList.remove('hidden');
+            // If on mobile, trigger the drill-down view
+            const container = profilePreview.closest('.flex-1.flex.flex-col.lg\\:flex-row.overflow-hidden');
+            if (container && window.innerWidth <= 1024) {
+                container.classList.add('mobile-preview-active');
+            }
+        }
 
         const prevName = document.getElementById('previewName');
         if (prevName) prevName.textContent = name;
@@ -2376,7 +2396,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const ready = (cal !== 'Undefined' && zero !== 'Undefined' && mv !== 'Undefined');
 
-            if (query.includes('analyze') || query.includes('status')) {
+            if (query.includes('analyze')) {
                 let analysis = `<span class="text-blue-400 font-black">TACTICAL ANALYSIS:</span>\n`;
                 analysis += `<span class="text-zinc-400">CALIBER:</span> <span class="text-white">${cal}</span>\n`;
                 analysis += `<span class="text-zinc-400">ZERO:</span> <span class="text-white">${zero}yd</span>\n`;
@@ -2393,6 +2413,19 @@ document.addEventListener('DOMContentLoaded', () => {
                     analysis += `<span class="text-red-400 font-bold">\nMISSION STATUS: NO-GO.</span>\nCritical data missing. System requires Caliber/Zero/Velocity for high-fidelity solutions.`;
                 }
                 return analysis;
+            }
+
+            if (query.includes('status')) {
+                const syncStatus = window.owcLiveSync ? '<span class="text-emerald-400">LIVE</span>' : '<span class="text-zinc-500">MANUAL</span>';
+                const weatherStatus = document.getElementById('ws-timestamp')?.textContent !== '--:--:--' ? '<span class="text-emerald-400">SYNCED</span>' : '<span class="text-orange-400">STALE</span>';
+
+                let status = `<span class="text-zinc-400 font-black">SYSTEM ENGINE CHECK:</span>\n`;
+                status += `<span class="text-zinc-500">CORE STATUS:</span> <span class="text-white">OPERATIONAL</span>\n`;
+                status += `<span class="text-zinc-500">DATA MESH:</span> ${syncStatus}\n`;
+                status += `<span class="text-zinc-500">SENSOR ARRAY:</span> ${weatherStatus}\n`;
+                status += `<span class="text-zinc-500">PROFILE:</span> <span class="text-white">${cal}</span>\n`;
+                status += `\n<span class="text-blue-400 font-bold">SYSTEM READY.</span> All tactical sub-routines are running in optimized threads.`;
+                return status;
             }
 
             return ready ?
@@ -4165,6 +4198,7 @@ window.switchIntelTab = function (tabName) {
         } else if (tabName === 'target-cam') {
             setTimeout(() => {
                 if (typeof window.initTargetCam === 'function') window.initTargetCam();
+                if (typeof lucide !== 'undefined') lucide.createIcons();
             }, 250);
         } else if (tabName === 'weather-station') {
             // Auto-trigger weather lookup if first time opening
@@ -6797,6 +6831,44 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
     container.innerHTML = html;
 };
 
+// let compassInitialized = false; // Fixed: Duplicate declaration
+let compassOffset = parseFloat(localStorage.getItem('trc_compass_offset')) || 0;
+
+window.calibrateCompassOffset = function () {
+    // Current heading is what the phone THINKS is North.
+    // We want to set this heading as the New North (0 degrees).
+    const currentHeadingText = document.getElementById('hud-heading-val')?.textContent || "0";
+    const currentHeading = parseFloat(currentHeadingText.replace('°', '')) || 0;
+
+    // The offset is simply the negative of the current heading
+    // so that (currentHeading + offset) % 360 = 0
+    // We adjust the current global offset relative to what the user JUST saw.
+    compassOffset = (compassOffset - currentHeading + 720) % 360;
+
+    localStorage.setItem('trc_compass_offset', compassOffset);
+
+    // Provide visual feedback
+    const btn = event?.currentTarget;
+    if (btn) {
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<i data-lucide="check" class="w-4 h-4"></i> CALIBRATED';
+        btn.classList.replace('bg-orange-600', 'bg-emerald-600');
+        setTimeout(() => {
+            btn.innerHTML = orig;
+            btn.classList.replace('bg-emerald-600', 'bg-orange-600');
+            lucide.createIcons();
+        }, 2000);
+    }
+
+    console.log("[COMPASS] New Offset Applied:", compassOffset);
+};
+
+window.resetCompassOffset = function () {
+    compassOffset = 0;
+    localStorage.removeItem('trc_compass_offset');
+    console.log("[COMPASS] Offset Reset to Factory");
+};
+
 window.requestSensorAccess = function () {
     const prompt = document.getElementById('hud-sensor-prompt');
     const diagnostic = document.getElementById('hud-diagnostic-msg');
@@ -6874,7 +6946,7 @@ function handleOrientation(event) {
     }
 
     // Apply adjustment and normalize to 0-359
-    let heading = (rawHeading + screenAdjustment + 360) % 360;
+    let heading = (rawHeading + screenAdjustment + compassOffset + 720) % 360;
 
     // UI expects rotation to put the cardinal at the TOP
     // If heading is 90 (East), we rotate the card -90 (or 270) to put East at Top
@@ -7052,7 +7124,7 @@ window.initTacticalMap = function (forceReinit = false) {
         window.mapMarkersDragged = false;
     }
 
-    window.mapPolyline = L.polyline([window.mapShooterMarker.getLatLng(), window.mapTargetMarker.getLatLng()], { color: '#3b82f6', weight: 2, dashArray: '5, 10' }).addTo(window.tacticalMap);
+    window.mapPolyline = L.polyline([window.mapShooterMarker.getLatLng(), window.mapTargetMarker.getLatLng()], { color: '#000000', weight: 3, dashArray: '5, 10' }).addTo(window.tacticalMap);
 
     const updateMapDist = () => {
         if (!window.mapShooterMarker || !window.mapTargetMarker) return;
@@ -7853,25 +7925,30 @@ const initTargetDB = () => {
 
 // Initialize Target Cam
 window.initTargetCam = async function () {
-    // Stop any existing stream first
-    if (window.stopTargetCam) {
-        window.stopTargetCam();
-    }
-
-    // Explicitly kill any previous camera access to avoid "stuck" state
-    try {
-        const stream = window.targetCamStream;
-        if (stream) {
-            stream.getTracks().forEach(track => {
-                track.stop();
-                console.log("[TARGET CAM] Emergency stop track:", track.label);
-            });
-        }
-    } catch (e) {
-        console.warn("[TARGET CAM] Stream cleanup failed", e);
-    }
-
     const video = document.getElementById('target-cam-video');
+
+    if (!video) {
+        console.error("[TARGET CAM] Video element not found!");
+        return;
+    }
+
+    // 1. Check for Secure Context (Warning only, don't block)
+    if (!window.isSecureContext && location.hostname !== 'localhost') {
+        console.warn("[TARGET CAM] Not a secure context. Camera might be blocked by browser.");
+    }
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        console.error("[TARGET CAM] MediaDevices API not supported");
+        startMetadataUpdates();
+        return;
+    }
+
+    // Stop any existing stream first
+    if (window.targetCamStream) {
+        window.targetCamStream.getTracks().forEach(track => track.stop());
+        window.targetCamStream = null;
+    }
+
     if (!video) {
         console.error("[TARGET CAM] Video element not found");
         return;
@@ -7880,7 +7957,6 @@ window.initTargetCam = async function () {
     try {
         console.log("[TARGET CAM] Requesting camera access...");
 
-        // Try high quality first, then fallback to simple constraints if it fails
         const constraints = {
             video: {
                 facingMode: { ideal: "environment" },
@@ -7900,37 +7976,17 @@ window.initTargetCam = async function () {
         window.targetCamStream = stream;
         video.srcObject = stream;
 
-        // Ensure video actually starts playing
-        await video.play().catch(e => console.error("[TARGET CAM] Play failed", e));
+        video.onloadedmetadata = () => {
+            video.play().catch(e => console.error("[TARGET CAM] Play failed", e));
+            console.log("[TARGET CAM] Camera initialized successfully");
+        };
 
         // Start metadata updates
         startMetadataUpdates();
 
-        console.log("[TARGET CAM] Camera initialized successfully");
     } catch (err) {
         console.error("[TARGET CAM] Camera access failed:", err.name, err.message);
-
-        // Show error to user
-        const video = document.getElementById('target-cam-video');
-        if (video) {
-            video.style.display = 'none';
-        }
-
-        // Create error message overlay
-        const container = video.parentElement;
-        const errorDiv = document.createElement('div');
-        errorDiv.className = 'absolute inset-0 flex flex-col items-center justify-center bg-black/90 text-center p-6';
-        errorDiv.innerHTML = `
-            <i data-lucide="camera-off" class="w-16 h-16 text-red-500 mb-4"></i>
-            <h3 class="text-white text-sm font-black mb-2">CAMERA ACCESS DENIED</h3>
-            <p class="text-zinc-400 text-xs mb-4">${err.message}</p>
-            <p class="text-zinc-500 text-[10px]">Enable camera permission in browser settings</p>
-        `;
-        container.appendChild(errorDiv);
-
-        // Still start metadata updates for GPS/heading
         startMetadataUpdates();
-
         console.log("[TARGET CAM] Running in no-camera mode");
     }
 };
@@ -8241,13 +8297,6 @@ window.clearVault = async function () {
     };
 };
 
-// Open target detail (placeholder for Phase 2)
-window.openTargetDetail = function (id) {
-    console.log("[VAULT] Opening target:", id);
-    // Phase 2: Open measurement overlay
-    alert("Target detail view - Coming in Phase 2 (MIL/MOA measurement)");
-};
-
 // Initialize DB on load
 initTargetDB();
 
@@ -8264,6 +8313,73 @@ let currentTargetData = null;
 let measureMode = false;
 let measureStart = null;
 let measureEnd = null;
+let currentReticleType = 'box';
+let poiPins = [];
+let isPOITagging = false;
+let cameraFOV = parseFloat(localStorage.getItem('trc_camera_fov')) || 65;
+
+window.calibrateFOV = function (knownSizeIn, distanceYds) {
+    if (!measureStart || !measureEnd || !knownSizeIn || !distanceYds) {
+        alert("Measure a known object first!");
+        return;
+    }
+
+    const boxHeight = Math.abs(measureEnd.y - measureStart.y);
+    const milReading = (knownSizeIn * 27.77) / distanceYds;
+
+    // We reverse the math: milReading = (boxHeight/imageHeight * FOV) / 0.0573
+    // So: FOV = (milReading * 0.0573) / (boxHeight/imageHeight)
+    const dimensionRatio = boxHeight / window.imageHeight;
+    cameraFOV = (milReading * 0.0573) / dimensionRatio;
+
+    localStorage.setItem('trc_camera_fov', cameraFOV);
+    console.log("[TARGET] FOV Calibrated to:", cameraFOV);
+    calculateMilMoa();
+};
+
+window.updateReticleType = function (type) {
+    currentReticleType = type;
+    drawMeasurementBox();
+    console.log("[TARGET] Reticle set to:", type);
+};
+
+window.requestFOVCal = function () {
+    const size = prompt("Enter known object size (inches):", "18");
+    const dist = prompt("Enter known distance (yards):", "100");
+    if (size && dist) calibrateFOV(parseFloat(size), parseFloat(dist));
+};
+
+window.nudgeMeasure = function (px) {
+    if (!measureStart || !measureEnd) {
+        // Init a default box if none exists
+        const canvas = document.getElementById('measurement-canvas');
+        measureStart = { x: canvas.width / 4, y: canvas.height / 4 };
+        measureEnd = { x: canvas.width * 3 / 4, y: canvas.height * 3 / 4 };
+    }
+
+    if (measurementDimension === 'height') {
+        measureEnd.y += px;
+    } else {
+        measureEnd.x += px;
+    }
+
+    drawMeasurementBox();
+    calculateMilMoa();
+};
+
+window.togglePOITagging = function () {
+    isPOITagging = !isPOITagging;
+    const btn = document.getElementById('poi-tag-btn');
+    if (isPOITagging) {
+        btn?.classList.replace('text-blue-400', 'text-orange-400');
+        btn?.classList.replace('bg-blue-600/20', 'bg-orange-600/20');
+        measureMode = false;
+        calibrationMode = false;
+    } else {
+        btn?.classList.replace('text-orange-400', 'text-blue-400');
+        btn?.classList.replace('bg-orange-600/20', 'bg-blue-600/20');
+    }
+};
 let currentMilReading = 0;
 let measurementDimension = 'height'; // 'height' or 'width'
 let calibrationMode = false;
@@ -8398,87 +8514,57 @@ function setupMeasurementCanvas() {
     window.imageWidth = imgRect.width;
     window.imageHeight = imgRect.height;
 
-    // Add mouse event listeners
+    // Add event listeners (Mouse & Touch)
     canvas.style.pointerEvents = 'auto';
 
     let isDrawing = false;
 
-    canvas.addEventListener('mousedown', (e) => {
-        if (!measureMode) return;
-
+    const getPos = (e) => {
         const rect = canvas.getBoundingClientRect();
-        measureStart = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return {
+            x: clientX - rect.left,
+            y: clientY - rect.top
         };
+    };
+
+    const startAction = (e) => {
+        const pos = getPos(e);
+
+        if (isPOITagging) {
+            poiPins.push(pos);
+            drawMeasurementBox();
+            return;
+        }
+
+        if (!measureMode && !calibrationMode) return;
+        measureStart = pos;
         isDrawing = true;
-    });
+    };
 
-    canvas.addEventListener('mousemove', (e) => {
-        if (!measureMode || !isDrawing) return;
-
-        const rect = canvas.getBoundingClientRect();
-        measureEnd = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
-
+    const moveAction = (e) => {
+        if (!isDrawing) return;
+        measureEnd = getPos(e);
         drawMeasurementBox();
-    });
+    };
 
-    canvas.addEventListener('mouseup', (e) => {
-        if (!measureMode || !isDrawing) return;
-
+    const endAction = (e) => {
+        if (!isDrawing) return;
         isDrawing = false;
-        const rect = canvas.getBoundingClientRect();
-        measureEnd = {
-            x: e.clientX - rect.left,
-            y: e.clientY - rect.top
-        };
-
-        drawMeasurementBox();
         calculateMilMoa();
-    });
+    };
 
-    // Touch support for mobile
-    canvas.addEventListener('touchstart', (e) => {
-        if (!measureMode) return;
-        e.preventDefault();
+    canvas.addEventListener('mousedown', startAction);
+    canvas.addEventListener('mousemove', moveAction);
+    canvas.addEventListener('mouseup', endAction);
 
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        measureStart = {
-            x: touch.clientX - rect.left,
-            y: touch.clientY - rect.top
-        };
-        isDrawing = true;
-    });
-
-    canvas.addEventListener('touchmove', (e) => {
-        if (!measureMode || !isDrawing) return;
-        e.preventDefault();
-
-        const rect = canvas.getBoundingClientRect();
-        const touch = e.touches[0];
-        measureEnd = {
-            x: touch.clientX - rect.left,
-            y: touch.clientY - rect.top
-        };
-
-        drawMeasurementBox();
-    });
-
-    canvas.addEventListener('touchend', (e) => {
-        if (!measureMode || !isDrawing) return;
-        e.preventDefault();
-
-        isDrawing = false;
-        drawMeasurementBox();
-        calculateMilMoa();
-    });
+    canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startAction(e); });
+    canvas.addEventListener('touchmove', (e) => { e.preventDefault(); moveAction(e); });
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); endAction(e); });
 }
 
-// Draw measurement box on canvas
+// Draw measurement box or reticle on canvas
 function drawMeasurementBox() {
     if (!measureStart || !measureEnd) return;
 
@@ -8488,30 +8574,99 @@ function drawMeasurementBox() {
     // Clear previous drawing
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-    // Draw box
-    ctx.strokeStyle = '#3b82f6';
-    ctx.lineWidth = 2;
-    ctx.setLineDash([5, 5]);
-
     const width = measureEnd.x - measureStart.x;
     const height = measureEnd.y - measureStart.y;
-
-    ctx.strokeRect(measureStart.x, measureStart.y, width, height);
-
-    // Draw center crosshair
     const centerX = measureStart.x + width / 2;
     const centerY = measureStart.y + height / 2;
 
-    ctx.setLineDash([]);
-    ctx.strokeStyle = '#10b981';
-    ctx.lineWidth = 1;
+    if (currentReticleType === 'box') {
+        // Legacy Box Drawing
+        ctx.strokeStyle = '#3b82f6';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([5, 5]);
+        ctx.strokeRect(measureStart.x, measureStart.y, width, height);
 
+        // Center cross
+        ctx.setLineDash([]);
+        ctx.strokeStyle = '#10b981';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(centerX - 10, centerY); ctx.lineTo(centerX + 10, centerY);
+        ctx.moveTo(centerX, centerY - 10); ctx.lineTo(centerX, centerY + 10);
+        ctx.stroke();
+    } else if (currentReticleType === 'mildot' || currentReticleType === 'aprs11') {
+        // High-Precision Reticle Overlay
+        drawTacticalReticle(ctx, centerX, centerY, Math.abs(height), currentReticleType);
+    }
+
+    // Draw POI Pins if any
+    drawPOIPins(ctx);
+}
+
+function drawTacticalReticle(ctx, cx, cy, sizePx, type) {
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
+    ctx.strokeStyle = '#ef4444'; // Tactical Red
+
+    // Main Crosshair
     ctx.beginPath();
-    ctx.moveTo(centerX - 10, centerY);
-    ctx.lineTo(centerX + 10, centerY);
-    ctx.moveTo(centerX, centerY - 10);
-    ctx.lineTo(centerX, centerY + 10);
+    ctx.moveTo(cx - sizePx, cy); ctx.lineTo(cx + sizePx, cy);
+    ctx.moveTo(cx, cy - sizePx); ctx.lineTo(cx, cy + sizePx);
     ctx.stroke();
+
+    // Hash Marks (Every MIL)
+    // We assume 'sizePx' is the total height, representing maybe 10 MILs for scale
+    const pixelsPerMil = sizePx / 10;
+
+    for (let i = -10; i <= 10; i++) {
+        if (i === 0) continue;
+        const pos = i * pixelsPerMil;
+
+        // Vertical Hashes
+        ctx.beginPath();
+        ctx.moveTo(cx - 5, cy + pos); ctx.lineTo(cx + 5, cy + pos);
+        ctx.stroke();
+
+        // Horizontal Hashes
+        ctx.beginPath();
+        ctx.moveTo(cx + pos, cy - 5); ctx.lineTo(cx + pos, cy + 5);
+        ctx.stroke();
+
+        // APRS11 Christmas Tree Logic
+        if (type === 'aprs11' && i > 0 && i % 2 === 0) {
+            // Draw windage dots for holdovers at 2, 4, 6, 8, 10 MILs down
+            const count = i / 2; // number of dots each side
+            for (let j = 1; j <= count; j++) {
+                const windagePos = j * pixelsPerMil * 2; // simplified
+                ctx.beginPath();
+                ctx.arc(cx + windagePos, cy + pos, 1, 0, Math.PI * 2);
+                ctx.arc(cx - windagePos, cy + pos, 1, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+    }
+
+    // Center Dot
+    ctx.beginPath();
+    ctx.arc(cx, cy, 2, 0, Math.PI * 2);
+    ctx.fillStyle = '#ef4444';
+    ctx.fill();
+}
+
+function drawPOIPins(ctx) {
+    poiPins.forEach((pin, idx) => {
+        ctx.fillStyle = '#f97316'; // Orange
+        ctx.beginPath();
+        ctx.arc(pin.x, pin.y, 8, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+
+        ctx.fillStyle = '#fff';
+        ctx.font = 'black 10px Inter';
+        ctx.textAlign = 'center';
+        ctx.fillText(idx + 1, pin.x, pin.y + 3);
+    });
 }
 
 // Calculate MIL/MOA from measurement box (Phase 3: supports width/height and calibration)
@@ -8525,12 +8680,12 @@ function calculateMilMoa() {
     const boxDimension = measurementDimension === 'height' ? boxHeight : boxWidth;
     const imageDimension = measurementDimension === 'height' ? window.imageHeight : window.imageWidth;
 
-    // Camera FOV (approx 65 degrees)
-    const cameraFOV = 65;
+    // Camera FOV (User Calibratable, default 65)
+    const activeFOV = cameraFOV;
 
     // Calculate MIL reading
     const dimensionRatio = boxDimension / imageDimension;
-    const angularSize = dimensionRatio * cameraFOV;
+    const angularSize = dimensionRatio * activeFOV;
     const milReading = (angularSize / 0.0573);
     const moaReading = milReading * 3.6;
 
@@ -8671,59 +8826,9 @@ window.systemStatus = "READY";
 
 // === RETICLE DRAWING SYSTEM ===
 window.drawReticles = function () {
-    console.log("[RETICLE] Drawing reticles on available canvases...");
-
-    // Attempt to draw HOLD reticle
-    const canvasHold = document.getElementById('canvas-hold');
-    if (canvasHold) {
-        drawCanvasReticle(canvasHold);
-    }
-
-    // Attempt to draw SHOT reticle
-    const canvasShot = document.getElementById('canvas-shot');
-    if (canvasShot) {
-        drawCanvasReticle(canvasShot);
-    }
+    window.updateAllCanvases('hold');
+    window.updateAllCanvases('shot');
 };
-
-function drawCanvasReticle(canvas) {
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const w = canvas.width;
-    const h = canvas.height;
-    const cx = w / 2;
-    const cy = h / 2;
-
-    // Clear
-    ctx.clearRect(0, 0, w, h);
-
-    // Style
-    ctx.strokeStyle = '#9ca3af'; // gray-400
-    ctx.lineWidth = 1;
-
-    // Draw Crosshair
-    ctx.beginPath();
-    ctx.moveTo(cx, 0);
-    ctx.lineTo(cx, h);
-    ctx.moveTo(0, cy);
-    ctx.lineTo(w, cy);
-    ctx.stroke();
-
-    // Draw Mil Dots (Simple visual representation)
-    ctx.fillStyle = '#000000';
-    const dotSpacing = w / 10; // 5 mils each side
-    const dotSize = 1.5;
-
-    for (let i = 1; i < 5; i++) {
-        // Horizontal
-        ctx.beginPath(); ctx.arc(cx + (i * dotSpacing), cy, dotSize, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx - (i * dotSpacing), cy, dotSize, 0, Math.PI * 2); ctx.fill();
-
-        // Vertical
-        ctx.beginPath(); ctx.arc(cx, cy + (i * dotSpacing), dotSize, 0, Math.PI * 2); ctx.fill();
-        ctx.beginPath(); ctx.arc(cx, cy - (i * dotSpacing), dotSize, 0, Math.PI * 2); ctx.fill();
-    }
-}
 
 // Initial draw if elements exist
 setTimeout(window.drawReticles, 1000);
