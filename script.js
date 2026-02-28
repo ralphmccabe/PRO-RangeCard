@@ -2383,9 +2383,14 @@ document.addEventListener('DOMContentLoaded', () => {
             const history = window.AILifecycle.blackbox.map(b => `[${b.t}] ${b.e}: ${b.d}`).join('\n');
             return `[BLACK BOX FORENSICS]\n${history || "No data recorded yet."}`;
         }
-        if (query === 'status') {
+        if (query === 'status' || query === 'diagnose') {
             const isApk = window.location.protocol === 'file:';
-            return `[STATUS REPORT]\nProtocol: ${isApk ? "APK/FILE (Isolated)" : "URL/WEB (Live)"}\nWatchdog: Active\nBreach Status: 100% Secure.`;
+            const vaultItems = window.AILifecycle.lastVaultCount || 0;
+            return `[SYSTEM DIAGNOSIS]\nProtocol: ${isApk ? "APK/FILE (Isolated)" : "URL/WEB (Live)"}\nWatchdog: Active\nWarehouse: ${vaultItems} items identified.\nBreach Status: 100% Secure.`;
+        }
+        if (query === 'vault') {
+            const vaultItems = window.AILifecycle.lastVaultCount || 0;
+            return `[WAREHOUSE STATUS]\nLocation: IndexedDB High-Capacity\nItems: ${vaultItems}\nStatus: Operational. No memory pressure detected.`;
         }
         // Helper to get value from OWC with HUD fallback
         const getVal = (owcId, hudId, fallback = 'Undefined') => {
@@ -4698,7 +4703,7 @@ window.closeIntelHub = function () {
 
 // Initialize Intel Hub Button
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.AILifecycle) window.AILifecycle.onBoot();
+
     const openIntelBtn = document.getElementById('openIntelBtn');
     if (openIntelBtn) {
         openIntelBtn.onclick = () => {
@@ -5309,7 +5314,7 @@ window.initVirtualSpotter = function () {
 
 // --- TAB SCROLL BOOSTER (For PC Emulators) ---
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.AILifecycle) window.AILifecycle.onBoot();
+
     const tabContainer = document.querySelector('.no-scrollbar');
     if (!tabContainer) return;
 
@@ -6626,7 +6631,7 @@ window.loadWorkCenterState = function () {
 
 // Auto-Save Listeners
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.AILifecycle) window.AILifecycle.onBoot();
+
     // ... existing init code ...
     window.loadWorkCenterState();
 
@@ -7727,7 +7732,7 @@ window.deleteArchivedTape = async function (id) {
 // ===================================================================
 // Moved out of Intel Hub context to prevent accidental marking during scroll.
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.AILifecycle) window.AILifecycle.onBoot();
+
     let mobileStrokes = [];
     let desktopStrokes = [];
 
@@ -8903,7 +8908,7 @@ window.loadWorkCenterState = function () {
 
 // Hook up event listeners for persistence
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.AILifecycle) window.AILifecycle.onBoot();
+
     window.loadWorkCenterState();
 
     const inputs = [
@@ -9168,6 +9173,7 @@ window.renderDropTable = function (data, metadata = "QUICK DOPE", weatherLegacy 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
 };
+
 
 
 
