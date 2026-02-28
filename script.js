@@ -2278,7 +2278,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         onBoot: async function () {
             this.missionStarted = new Date();
-            this.log("MISSION_START", "System Initialization");
+            this.log("MISSION_START", "Alpha Intellect Online");
             this.lastVaultCount = 0;
             const waitAndGreet = async (attempts = 0) => {
                 if (attempts > 15) return;
@@ -2291,19 +2291,20 @@ document.addEventListener('DOMContentLoaded', () => {
                     this.lastVaultCount = Array.isArray(vaultData) ? vaultData.length : 0;
 
                     const isIsolated = window.FORTRESS_ISOLATED;
-                    const isGitHub = window.location.hostname.includes('github.io');
+                    const hostname = window.location.hostname;
+                    const isGitHub = hostname.includes('github.io');
 
-                    let statusText = isIsolated ? "\uD83D\uDEE1\uFE0F FORTRESS ISOLATED (Local)" : "\uD83C\uDF10 CLOUD SYNC ACTIVE (Web)";
-                    if (isGitHub) statusText = "\u26A0\uFE0F HIJACK ALERT: CLOUD OVERRIDE";
+                    let statusText = isIsolated ? "\uD83D\uDEE1\uFE0F FORTRESS SECURE (Local)" : (isGitHub ? "\uD83C\uDF10 CLOUD SYNC ACTIVE (Web)" : "\u26A0\uFE0F UNKNOWN ENVIRONMENT");
+                    let intelDetail = isIsolated ? "Domain Guard is active. Service Worker neutralized." : (isGitHub ? "Syncing with GitHub Cloud." : "Verification required.");
 
-                    let g = `[TACTICAL BRIEF] Mission started: ${this.missionStarted.toLocaleTimeString()}.\n`;
+                    let g = `[ALPHA INTELLECT] Tactical Pilot Online: ${this.missionStarted.toLocaleTimeString()}.\n`;
                     g += `STATUS: ${statusText}\n`;
                     g += `VAULT: ${this.lastVaultCount} records secured in Warehouse.\n`;
-                    g += `INTELLECT: Isolation Watchdog is active. Type 'SNOOP' to scan for ghosts.`;
+                    g += `INTEL: ${intelDetail}`;
 
                     if (window.addChatBubble) {
                         window.addChatBubble('bot', g);
-                        this.log("GREETING_SENT", "Tactical Briefing active.");
+                        this.log("ALPHA_GREETING", "Mission status confirmed.");
                     } else {
                         setTimeout(() => waitAndGreet(attempts + 1), 1000);
                     }
@@ -2403,12 +2404,19 @@ document.addEventListener('DOMContentLoaded', () => {
             return `[TACTICAL COMMANDS]\n- STATUS: Check Isolation health\n- SNOOP: Forensic Ghost Search\n- PURGE: Nuclear Ghost Erasure\n- VAULT: Warehouse metrics\n- DIAGNOSE: Full system audit\n- BLACKBOX: Recent events`;
         }
         if (cmd === 'snoop') {
-            if (window.AILifecycle) window.AILifecycle.log("FORENSIC_SNOOP", "Scanning for hijackers");
+            if (window.AILifecycle) window.AILifecycle.log("FORENSIC_SNOOP", "Scanning domain integrity");
             return (async () => {
-                const sw = 'serviceWorker' in navigator ? (await navigator.serviceWorker.getRegistrations()).length : 0;
+                const regs = 'serviceWorker' in navigator ? await navigator.serviceWorker.getRegistrations() : [];
                 const cache = 'caches' in window ? (await caches.keys()).length : 0;
                 const isIsolated = window.FORTRESS_ISOLATED;
-                return `[FORENSIC REPORT]\n- GHOSTS (SW): ${sw} Active\n- CACHES: ${cache} Detected\n- MODE: ${isIsolated ? "FORTRESS" : "VULNERABLE"}\n- CULPRIT: ${window.location.hostname || "Local Filesystem"}`;
+                const hostname = window.location.hostname || "Local Filesystem";
+
+                let report = `[ALPHA SNOOP REPORT]\n`;
+                report += `- DOMAIN: ${hostname}\n`;
+                report += `- STATUS: ${isIsolated ? "FORTRESS SECURE" : "CLOUD ACTIVE"}\n`;
+                report += `- GHOSTS: ${regs.length} detected.\n`;
+                report += `- INTELLIGENCE: Domain Guard will sterilize unauthorized workers.`;
+                return report;
             })();
         }
         if (cmd === 'purge' || cmd === 'unghost') {

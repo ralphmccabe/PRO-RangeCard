@@ -1,3 +1,15 @@
+/**
+ * APEX BALLISTICS - SERVICE WORKER (RC15-Sterilized)
+ * DOMAIN GUARD: This worker only operates on ralphmccabe.github.io.
+ * If detected in a local APK or unauthorized domain, it self-destructs.
+ */
+if (self.location.hostname !== 'ralphmccabe.github.io') {
+    console.warn("[SW] Sterilization Active: Unauthorized domain detected. Self-destructing...");
+    self.registration.unregister().then(() => {
+        console.log("[SW] Sterilization Complete. Local Fortress isolated.");
+    });
+}
+
 const CACHE_NAME = 'apex-v1-rc15-nuclear-v4-0';
 const ASSETS = [
     './',
