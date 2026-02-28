@@ -10,24 +10,27 @@
     <link rel="manifest" href="manifest.json">
     <script>
         // NUCLEAR CLEANUP - Forces a fresh start by wiping all Service Workers and Caches
-        // Run once per major version change or when emergency stability is needed.
         (async function () {
-            const PURGE_KEY = 'trc_total_purge_v4.0_stable';
-            if (localStorage.getItem(PURGE_KEY)) return;
+            try {
+                const PURGE_KEY = 'trc_total_purge_v4.0_stable_final';
+                if (localStorage.getItem(PURGE_KEY)) return;
 
-            console.warn("[NUCLEAR] Stabilizing app: Purging old caches...");
-            if ('serviceWorker' in navigator) {
-                const regs = await navigator.serviceWorker.getRegistrations();
-                for (let r of regs) await r.unregister();
-            }
-            if ('caches' in window) {
-                const keys = await caches.keys();
-                for (let k of keys) await caches.delete(k);
-            }
+                console.warn("[NUCLEAR] Stabilizing app: Purging old caches...");
+                if ('serviceWorker' in navigator) {
+                    const regs = await navigator.serviceWorker.getRegistrations();
+                    for (let r of regs) await r.unregister();
+                }
+                if ('caches' in window) {
+                    const keys = await caches.keys();
+                    for (let k of keys) await caches.delete(k);
+                }
 
-            localStorage.setItem(PURGE_KEY, 'true');
-            console.log("[NUCLEAR] Cleanup complete. Reloading...");
-            window.location.reload(true);
+                localStorage.setItem(PURGE_KEY, 'true');
+                console.log("[NUCLEAR] Cleanup complete. Reloading...");
+                setTimeout(() => window.location.reload(true), 2000); // 2s delay to ensure storage writes
+            } catch (e) {
+                console.error("[NUCLEAR] Cleanup error:", e);
+            }
         })();
     </script>
     <script src="tailwind.min.js"></script>
