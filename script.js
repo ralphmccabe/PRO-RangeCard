@@ -1,4 +1,15 @@
-﻿// Theme Toggle Logic
+﻿// --- EMERGENCY SAFETY SHIELD ---
+// Ensures window.safeStorage is ALWAYS defined before script execution
+if (typeof window.safeStorage === 'undefined') {
+    console.warn("[EMERGENCY] window.safeStorage was missing at script.js load. Initializing fallback.");
+    window.safeStorage = {
+        getItem: function (k) { return null; },
+        setItem: function (k, v) { },
+        removeItem: function (k) { }
+    };
+}
+
+// Theme Toggle Logic
 window.setTheme = function (theme) {
     if (theme === 'light') {
         document.body.classList.add('light-theme');

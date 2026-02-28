@@ -21,6 +21,11 @@ const idb = {
         }
         if (this.db) return this.db;
         return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+                console.error("[IDB] Connection timed out after 2s.");
+                reject(new Error("Timeout"));
+            }, 2000);
+
             try {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -35,17 +40,20 @@ const idb = {
                 };
 
                 request.onsuccess = (event) => {
+                    clearTimeout(timeoutId);
                     this.db = event.target.result;
                     resolve(this.db);
                 };
 
                 request.onerror = (event) => {
+                    clearTimeout(timeoutId);
                     const error = event.target.error;
                     console.error("[IDB] Database error:", error);
                     window.IDB_CRITICAL_ERROR = error;
                     reject(error);
                 };
             } catch (e) {
+                clearTimeout(timeoutId);
                 console.error("[IDB] Initial open failed:", e);
                 reject(e);
             }
