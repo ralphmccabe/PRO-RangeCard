@@ -15,48 +15,69 @@
          * Wipes all Service Workers and Caches on EVERY load.
          */
         (async function () {
-            try {
-                if ('serviceWorker' in navigator) {
-                    const regs = await navigator.serviceWorker.getRegistrations();
-                    for (let r of regs) {
-                        console.warn("[ISOLATION] Terminating Service Worker:", r.active?.scriptURL);
-                        await r.unregister();
-                    }
-                }
-                if ('caches' in window) {
-                    const keys = await caches.keys();
-                    for (let k of keys) {
-                        console.warn("[ISOLATION] Purging Cache:", k);
-                        await caches.delete(k);
-                    }
-                }
-                // --- ISOLATION WATCHDOG (THE TRAP) ---
-                const badge = document.getElementById('isolation-watchdog');
-                const isApk = window.location.protocol === 'file:';
+            // --- THE MULTI-FACTOR FORTRESS CHECK ---
+            const protocol = window.location.protocol;
+            const hostname = window.location.hostname;
+            const isLocalFile = protocol === 'file:';
+            const isLocalHost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '';
+            const isAndroidEnv = /android/i.test(navigator.userAgent);
 
+            // Definitively isolated if it's not on a public web domain
+            window.FORTRESS_ISOLATED = (isLocalFile || isLocalHost) && !hostname.includes('github.io');
+            const isGitHub = hostname.includes('github.io');
+
+            // --- THE AGGRESSIVE KILL LOOP ---
+            const killGhosts = async () => {
+                try {
+                    if ('serviceWorker' in navigator) {
+                        const regs = await navigator.serviceWorker.getRegistrations();
+                        for (let r of regs) {
+                            console.warn("[FORTRESS] Destroying Ghost:", r.active?.scriptURL);
+                            await r.unregister();
+                        }
+                    }
+                    if ('caches' in window) {
+                        const keys = await caches.keys();
+                        for (let k of keys) {
+                            console.warn("[FORTRESS] Purging Haunted Cache:", k);
+                            await caches.delete(k);
+                        }
+                    }
+                } catch (e) {
+                    console.error("[FORTRESS] Kill loop error:", e);
+                }
+            };
+
+            // Run immediately and then every frame for 2 seconds to catch racing SWs
+            killGhosts();
+            let catchAttempts = 0;
+            const interval = setInterval(() => {
+                killGhosts();
+                if (++catchAttempts > 20) clearInterval(interval);
+            }, 100);
+
+            // --- ISOLATION WATCHDOG (THE TRAP) ---
+            window.addEventListener('load', () => {
+                const badge = document.getElementById('isolation-watchdog');
                 if (badge) {
-                    if (isApk) {
+                    if (window.FORTRESS_ISOLATED && !isGitHub) {
                         badge.textContent = "🛡️ APK SECURE";
                         badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 text-blue-400";
+                    } else if (isGitHub) {
+                        badge.textContent = "⚠️ CLOUD HIJACK";
+                        badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-red-500 bg-red-600 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]";
                     } else {
                         badge.textContent = "🌐 URL LIVE";
                         badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-green-500/30 bg-green-500/10 text-green-400";
                     }
                 }
+            });
 
-                // THE TRAP: Listen for any Service Worker trying to take control
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.addEventListener('controllerchange', () => {
-                        console.error("[BREACH] A Service Worker just took control of the app!");
-                        if (badge) {
-                            badge.textContent = "⚠️ ISOLATION BREACH";
-                            badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-red-500 bg-red-600 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]";
-                        }
-                        if (window.showToast) window.showToast("ISOLATION BREACH DETECTED", "error");
-                    });
-                }
-            } catch (e) {
-                console.error("[ISOLATION] Kill switch error:", e);
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    console.error("[BREACH] A Ghost has claimed navigation!");
+                    window.location.reload(); // Force a clean slate
+                });
             }
         })();
     </script>

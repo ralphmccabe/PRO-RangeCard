@@ -2281,7 +2281,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.log("MISSION_START", "System Initialization");
             this.lastVaultCount = 0;
             const waitAndGreet = async (attempts = 0) => {
-                if (attempts > 15) return; 
+                if (attempts > 15) return;
                 try {
                     if (!window.TRC_IDB) {
                         setTimeout(() => waitAndGreet(attempts + 1), 1000);
@@ -2289,10 +2289,18 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     const vaultData = await window.TRC_IDB.getAll('dopeVault');
                     this.lastVaultCount = Array.isArray(vaultData) ? vaultData.length : 0;
-                    const isApk = window.location.protocol === 'file:';
-                    const sText = isApk ? "\uD83D\uDEE1\uFE0F APK SECURE" : "\uD83C\uDF10 URL LIVE";
+
+                    const isIsolated = window.FORTRESS_ISOLATED;
+                    const isGitHub = window.location.hostname.includes('github.io');
+
+                    let statusText = isIsolated ? "\uD83D\uDEE1\uFE0F FORTRESS ISOLATED (Local)" : "\uD83C\uDF10 CLOUD SYNC ACTIVE (Web)";
+                    if (isGitHub) statusText = "\u26A0\uFE0F HIJACK ALERT: CLOUD OVERRIDE";
+
                     let g = `[TACTICAL BRIEF] Mission started: ${this.missionStarted.toLocaleTimeString()}.\n`;
-                    g += `SYSTEM: ${sText}\nVAULT: ${this.lastVaultCount} items secured.\nWAREHOUSE: Operational. Fortress locked.`;
+                    g += `STATUS: ${statusText}\n`;
+                    g += `VAULT: ${this.lastVaultCount} records secured in Warehouse.\n`;
+                    g += `INTELLECT: Isolation Watchdog is active. Type 'SNOOP' to scan for ghosts.`;
+
                     if (window.addChatBubble) {
                         window.addChatBubble('bot', g);
                         this.log("GREETING_SENT", "Tactical Briefing active.");
@@ -2332,8 +2340,10 @@ document.addEventListener('DOMContentLoaded', () => {
         chatInput.value = '';
 
         // Process thinking delay
-        setTimeout(() => {
-            const response = generateAIResponse(query.toLowerCase());
+        setTimeout(async () => {
+            let response = generateAIResponse(query.toLowerCase());
+            // Support both string and async Promise responses
+            if (response instanceof Promise) response = await response;
             addChatBubble('bot', response);
         }, 600);
     };
@@ -2388,26 +2398,47 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addChatBubble = addChatBubble;
 
     function generateAIResponse(query) {
-        if (query === '/?' || query === 'help') {
-            return `[TACTICAL COMMANDS]\n- STATUS: Check Isolation health\n- BLACKBOX: View recent internal events\n- VAULT: Warehouse status\n- DIAGNOSE: Full system audit`;
+        const cmd = query.trim().toLowerCase();
+        if (cmd === '/?' || cmd === 'help') {
+            return `[TACTICAL COMMANDS]\n- STATUS: Check Isolation health\n- SNOOP: Forensic Ghost Search\n- PURGE: Nuclear Ghost Erasure\n- VAULT: Warehouse metrics\n- DIAGNOSE: Full system audit\n- BLACKBOX: Recent events`;
         }
-        if (query === 'blackbox') {
+        if (cmd === 'snoop') {
+            if (window.AILifecycle) window.AILifecycle.log("FORENSIC_SNOOP", "Scanning for hijackers");
+            return (async () => {
+                const sw = 'serviceWorker' in navigator ? (await navigator.serviceWorker.getRegistrations()).length : 0;
+                const cache = 'caches' in window ? (await caches.keys()).length : 0;
+                const isIsolated = window.FORTRESS_ISOLATED;
+                return `[FORENSIC REPORT]\n- GHOSTS (SW): ${sw} Active\n- CACHES: ${cache} Detected\n- MODE: ${isIsolated ? "FORTRESS" : "VULNERABLE"}\n- CULPRIT: ${window.location.hostname || "Local Filesystem"}`;
+            })();
+        }
+        if (cmd === 'purge' || cmd === 'unghost') {
+            if (window.AILifecycle) window.AILifecycle.log("PURGE_START", "Initiating ghost erasure");
+            (async () => {
+                const regs = await navigator.serviceWorker.getRegistrations();
+                for (let r of regs) await r.unregister();
+                const keys = await caches.keys();
+                for (let k of keys) await caches.delete(k);
+                window.addChatBubble('bot', "[PURGE COMPLETE] Ghosts unregistered. Caches wiped. Reloading Fortress...");
+                setTimeout(() => window.location.reload(), 2000);
+            })();
+            return "INITIATING NUCLEAR PURGE. STAND BY...";
+        }
+        if (cmd === 'blackbox') {
             const history = window.AILifecycle.blackbox.map(b => `[${b.t}] ${b.e}: ${b.d}`).join('\n');
             return `[BLACK BOX FORENSICS]\n${history || "No data recorded yet."}`;
         }
-        if (query === 'status') {
-            const isApk = window.location.protocol === 'file:';
-            return `[TACTICAL STATUS]\nProtocol: ${isApk ? "\uD83D\uDEE1\uFE0F APK (Isolated)" : "\uD83C\uDF10 URL (Live)"}\nWatchdog: Active/Secure\nSystem Mode: Operational.`;
+        if (cmd === 'status') {
+            const isIsolated = window.FORTRESS_ISOLATED;
+            return `[TACTICAL STATUS]\nProtocol: ${isIsolated ? "\uD83D\uDEE1\uFE0F APK (Isolated)" : "\uD83C\uDF10 URL (Live)"}\nWatchdog: Active/Secure\nMode: Operational.`;
         }
-        if (query === 'diagnose' || query === 'audit') {
-            const isApk = window.location.protocol === 'file:';
+        if (cmd === 'diagnose' || cmd === 'audit') {
             const vaultItems = window.AILifecycle.lastVaultCount || 0;
             const latency = Math.floor(Math.random() * 50) + 10;
-            return `[SYSTEM DIAGNOSIS]\n- Storage: High-Capacity IndexedDB\n- Records: ${vaultItems} Entry(s)\n- Cache: Purged (Fortress Locked)\n- Latency: ${latency}ms\n- Security: Watchdog Breach-Trap Active.`;
+            return `[SYSTEM DIAGNOSIS]\n- Storage: High-Capacity IndexedDB\n- Records: ${vaultItems} Entry(s)\n- Cache: Purged (Fortress Locked)\n- Latency: ${latency}ms\n- Watchdog: Breach-Trap Active.`;
         }
-        if (query === 'vault') {
+        if (cmd === 'vault') {
             const vaultItems = window.AILifecycle.lastVaultCount || 0;
-            return `[WAREHOUSE STATUS]\nLocation: IndexedDB High-Capacity\nItems: ${vaultItems}\nStatus: Operational. No memory pressure detected.`;
+            return `[WAREHOUSE STATUS]\nLocation: IndexedDB High-Capacity\nItems: ${vaultItems}\nStatus: Operational. No memory pressure.`;
         }
         // Helper to get value from OWC with HUD fallback
         const getVal = (owcId, hudId, fallback = 'Undefined') => {
