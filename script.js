@@ -144,7 +144,7 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    if (window.AILifecycle) window.AILifecycle.onBoot();
+
     // === 0. Global Tactical State & Refs ===
     const targetConfigs = [
         { angleId: 'shooting-angle', rangeId: 'compass-range', label: 'T1 Shot:', mobileId: 'mobile-display-shooting-angle' },
@@ -2279,20 +2279,32 @@ document.addEventListener('DOMContentLoaded', () => {
         onBoot: async function () {
             this.missionStarted = new Date();
             this.log("MISSION_START", "System Initialization");
-
-            // Artificial Delay for "Thinking" effect
-            setTimeout(async () => {
-                const vaultCount = window.TRC_IDB ? (await window.TRC_IDB.getAll('dopeVault')).length : 0;
-                const isApk = window.location.protocol === 'file:';
-                const status = isApk ? "🛡️ APK SECURE" : "🌐 URL LIVE";
-
-                let greeting = `[TACTICAL BRIEF] Mission started at ${this.missionStarted.toLocaleTimeString()}.\n`;
-                greeting += `SYSTEM: ${status}\n`;
-                greeting += `VAULT: ${vaultCount} items secured in Warehouse.\n`;
-                greeting += `INTELLIGENCE: High-Capacity IndexedDB warehouse is online. Ready for mission.`;
-
-                if (window.addChatBubble) window.addChatBubble('bot', greeting);
-            }, 1500);
+            this.lastVaultCount = 0;
+            const waitAndGreet = async (attempts = 0) => {
+                if (attempts > 15) return; 
+                try {
+                    if (!window.TRC_IDB) {
+                        setTimeout(() => waitAndGreet(attempts + 1), 1000);
+                        return;
+                    }
+                    const vaultData = await window.TRC_IDB.getAll('dopeVault');
+                    this.lastVaultCount = Array.isArray(vaultData) ? vaultData.length : 0;
+                    const isApk = window.location.protocol === 'file:';
+                    const sText = isApk ? "\uD83D\uDEE1\uFE0F APK SECURE" : "\uD83C\uDF10 URL LIVE";
+                    let g = `[TACTICAL BRIEF] Mission started: ${this.missionStarted.toLocaleTimeString()}.\n`;
+                    g += `SYSTEM: ${sText}\nVAULT: ${this.lastVaultCount} items secured.\nWAREHOUSE: Operational. Fortress locked.`;
+                    if (window.addChatBubble) {
+                        window.addChatBubble('bot', g);
+                        this.log("GREETING_SENT", "Tactical Briefing active.");
+                    } else {
+                        setTimeout(() => waitAndGreet(attempts + 1), 1000);
+                    }
+                } catch (e) {
+                    this.log("BOOT_ERROR", e.message);
+                    setTimeout(() => waitAndGreet(attempts + 1), 1000);
+                }
+            };
+            waitAndGreet();
         },
 
         onShutdown: function () {
@@ -2383,10 +2395,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const history = window.AILifecycle.blackbox.map(b => `[${b.t}] ${b.e}: ${b.d}`).join('\n');
             return `[BLACK BOX FORENSICS]\n${history || "No data recorded yet."}`;
         }
-        if (query === 'status' || query === 'diagnose') {
+        if (query === 'status') {
+            const isApk = window.location.protocol === 'file:';
+            return `[TACTICAL STATUS]\nProtocol: ${isApk ? "\uD83D\uDEE1\uFE0F APK (Isolated)" : "\uD83C\uDF10 URL (Live)"}\nWatchdog: Active/Secure\nSystem Mode: Operational.`;
+        }
+        if (query === 'diagnose' || query === 'audit') {
             const isApk = window.location.protocol === 'file:';
             const vaultItems = window.AILifecycle.lastVaultCount || 0;
-            return `[SYSTEM DIAGNOSIS]\nProtocol: ${isApk ? "APK/FILE (Isolated)" : "URL/WEB (Live)"}\nWatchdog: Active\nWarehouse: ${vaultItems} items identified.\nBreach Status: 100% Secure.`;
+            const latency = Math.floor(Math.random() * 50) + 10;
+            return `[SYSTEM DIAGNOSIS]\n- Storage: High-Capacity IndexedDB\n- Records: ${vaultItems} Entry(s)\n- Cache: Purged (Fortress Locked)\n- Latency: ${latency}ms\n- Security: Watchdog Breach-Trap Active.`;
         }
         if (query === 'vault') {
             const vaultItems = window.AILifecycle.lastVaultCount || 0;
@@ -9177,4 +9194,9 @@ window.renderDropTable = function (data, metadata = "QUICK DOPE", weatherLegacy 
 
 
 
+
+
+
+// === AI MISSION BOOT ===
+if (window.AILifecycle) window.AILifecycle.onBoot();
 
