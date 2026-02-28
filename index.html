@@ -8,50 +8,6 @@
         content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Apex Ballistics</title>
     <link rel="manifest" href="manifest.json">
-    <script>
-        // Suppress manifest CORS error on local file protocol
-        if (window.location.protocol === 'file:') {
-            const manifestLink = document.querySelector('link[rel="manifest"]');
-            if (manifestLink) manifestLink.remove();
-        }
-
-        // SAFE STORAGE WRAPPER - Prevents crashes if browser blocks LocalStorage
-        // Defined here in <head> to be available to all subsequent scripts
-        (function () {
-            try {
-                const mem = {};
-                const isStorageAvailable = () => {
-                    try {
-                        if (!window.localStorage) return false;
-                        localStorage.setItem('__trc_test', '1');
-                        localStorage.removeItem('__trc_test');
-                        return true;
-                    } catch (e) { return false; }
-                };
-
-                const available = isStorageAvailable();
-                if (!available) console.warn("[SYS] LocalStorage blocked or restricted. Using memory fallback.");
-
-                window.safeStorage = {
-                    getItem: (k) => {
-                        try { return available ? localStorage.getItem(k) : mem[k] || null; }
-                        catch (e) { return mem[k] || null; }
-                    },
-                    setItem: (k, v) => {
-                        try { if (available) localStorage.setItem(k, v); else mem[k] = v; }
-                        catch (e) { mem[k] = v; }
-                    },
-                    removeItem: (k) => {
-                        try { if (available) localStorage.removeItem(k); else delete mem[k]; }
-                        catch (e) { delete mem[k]; }
-                    }
-                };
-            } catch (criticalError) {
-                console.error("[CRITICAL] SafeStorage init failed, using emergency fallback", criticalError);
-                window.safeStorage = { getItem: () => null, setItem: () => { }, removeItem: () => { } };
-            }
-        })();
-    </script>
     <script src="tailwind.min.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"

@@ -1,29 +1,15 @@
-ï»¿// --- EMERGENCY SAFETY SHIELD ---
-// Ensures window.safeStorage is ALWAYS defined before script execution
-if (typeof window.safeStorage === 'undefined') {
-    console.warn("[EMERGENCY] window.safeStorage was missing at script.js load. Initializing fallback.");
-    window.safeStorage = {
-        getItem: function (k) { return null; },
-        setItem: function (k, v) { },
-        removeItem: function (k) { }
-    };
-}
-
-// Theme Toggle Logic
-window.setTheme = function (theme) {
-    if (theme === 'light') {
         document.body.classList.add('light-theme');
     } else {
         document.body.classList.remove('light-theme');
     }
-    window.safeStorage.setItem('theme-preference', theme);
+    localStorage.setItem('theme-preference', theme);
 };
 
 // === Global Utility Functions ===
 
 window.forceAppUpdate = async function () {
     console.log("[CLEANUP] Final cache purge...");
-    window.safeStorage.setItem('trc_hard_refresh_pending', 'true');
+    localStorage.setItem('trc_hard_refresh_pending', 'true');
     if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker.getRegistrations();
         for (let r of regs) await r.unregister();
@@ -130,7 +116,7 @@ window.copyLoadData = function (btn) {
 
 // Initialize Theme on Load
 (function initTheme() {
-    const savedTheme = window.safeStorage.getItem('theme-preference') || 'dark';
+    const savedTheme = localStorage.getItem('theme-preference') || 'dark';
     if (savedTheme === 'light') {
         document.body.classList.add('light-theme');
     }
@@ -514,7 +500,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.canvasShots[type] = currentShots;
 
             // Persist to localStorage
-            window.safeStorage.setItem(`pending-canvas-shots-${type}`, JSON.stringify(currentShots));
+            localStorage.setItem(`pending-canvas-shots-${type}`, JSON.stringify(currentShots));
 
             window.updateAllCanvases(type);
         });
@@ -526,7 +512,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         window.canvasShots[type] = [];
-                        window.safeStorage.removeItem(`pending-canvas-shots-${type}`);
+                        localStorage.removeItem(`pending-canvas-shots-${type}`);
                         window.updateAllCanvases(type);
 
                         const resultEl = document.getElementById(`${type}-analysis-result`);
@@ -551,7 +537,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load persisted dots on startup
     ['hold', 'shot'].forEach(type => {
-        const saved = window.safeStorage.getItem(`pending-canvas-shots-${type}`);
+        const saved = localStorage.getItem(`pending-canvas-shots-${type}`);
         if (saved) {
             try {
                 window.canvasShots[type] = JSON.parse(saved);
@@ -830,9 +816,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 4. Wipe Storage (Nuke the persistent ghost data)
                 // Use empty object instead of just removing to ensure any simultaneous saves are overridden with 'empty'
-                window.safeStorage.setItem('rangeCardAutoSave', JSON.stringify({}));
-                window.safeStorage.removeItem('mobile-canvas-hold');
-                window.safeStorage.removeItem('mobile-canvas-shot');
+                localStorage.setItem('rangeCardAutoSave', JSON.stringify({}));
+                localStorage.removeItem('mobile-canvas-hold');
+                localStorage.removeItem('mobile-canvas-shot');
 
                 // 5. Clear Canvases (Drawings)
                 ['clear-hold-btn', 'clear-shot-btn', 'clear-pencil', 'clear-map-pencil-btn'].forEach(id => {
@@ -859,8 +845,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.canvasShots) {
                         window.canvasShots.hold = [];
                         window.canvasShots.shot = [];
-                        window.safeStorage.removeItem('pending-canvas-shots-hold');
-                        window.safeStorage.removeItem('pending-canvas-shots-shot');
+                        localStorage.removeItem('pending-canvas-shots-hold');
+                        localStorage.removeItem('pending-canvas-shots-shot');
                     }
                     if (typeof updateAllCanvases === 'function') {
                         updateAllCanvases('hold');
@@ -1080,8 +1066,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.canvasShots) {
             window.canvasShots.hold = data.canvasShots.hold || [];
             window.canvasShots.shot = data.canvasShots.shot || [];
-            window.safeStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots.hold));
-            window.safeStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots.shot));
+            localStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots.hold));
+            localStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots.shot));
             window.updateAllCanvases('hold');
             window.updateAllCanvases('shot');
         }
@@ -1378,7 +1364,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Dynamic button styling based on mode could go here
         }
 
-        window.safeStorage.setItem('compass-theme-preference', mode);
+        localStorage.setItem('compass-theme-preference', mode);
     };
 
     window.cycleCamoTheme = function () {
@@ -1386,7 +1372,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'default', 'amber', 'red', 'green', 'purple', 'cyan', 'white',
             'pink', 'orange', 'snowy', 'desert', 'summer', 'urban'
         ];
-        const current = window.safeStorage.getItem('compass-theme-preference') || 'default';
+        const current = localStorage.getItem('compass-theme-preference') || 'default';
         let nextIndex = themes.indexOf(current) + 1;
         if (nextIndex >= themes.length) nextIndex = 0;
 
@@ -1691,12 +1677,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
         }
 
-        window.safeStorage.setItem('tacticalFlavorIndex', index);
+        localStorage.setItem('tacticalFlavorIndex', index);
         console.log(`Applied tactical flavor: ${flavor.name}`);
     }
 
     if (colorCycleBtn) {
-        let currentFlavorIndex = parseInt(window.safeStorage.getItem('tacticalFlavorIndex')) || 0;
+        let currentFlavorIndex = parseInt(localStorage.getItem('tacticalFlavorIndex')) || 0;
 
         // Initial apply
         applyFlavor(currentFlavorIndex);
@@ -1707,7 +1693,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     } else {
         // Fallback for startup if button isn't found immediately
-        const savedIndex = parseInt(window.safeStorage.getItem('tacticalFlavorIndex')) || 0;
+        const savedIndex = parseInt(localStorage.getItem('tacticalFlavorIndex')) || 0;
         applyFlavor(savedIndex);
     }
 
@@ -1731,7 +1717,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // These are better handled by explicit save/export or slower background tasks
 
             try {
-                window.safeStorage.setItem('rangeCardAutoSave', JSON.stringify(formData));
+                localStorage.setItem('rangeCardAutoSave', JSON.stringify(formData));
                 console.log("[SYS] Tactical auto-save synced.");
             } catch (e) {
                 console.warn("Auto-save storage issue:", e);
@@ -1742,7 +1728,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function autoLoadAll() {
         window.isSystemLoading = true;
         console.log("[SYS] Auto-loading tactical data...");
-        const savedData = window.safeStorage.getItem('rangeCardAutoSave');
+        const savedData = localStorage.getItem('rangeCardAutoSave');
         if (savedData) {
             try {
                 const formData = JSON.parse(savedData);
@@ -1919,7 +1905,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isRefreshing && window.canvasShots && window.canvasShots['hold'] && window.canvasShots['hold'].length === 0) {
             // Place center dot for Stable/Reference
             window.canvasShots['hold'].push({ x: 100, y: 100 });
-            window.safeStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots['hold']));
+            localStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots['hold']));
             if (typeof updateAllCanvases === 'function') updateAllCanvases('hold');
         }
 
@@ -1971,7 +1957,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isRefreshing && window.canvasShots && window.canvasShots['shot'] && window.canvasShots['shot'].length === 0) {
             if (grade === 'MATCH GRADE' || grade === 'ACCEPTABLE') {
                 window.canvasShots['shot'].push({ x: 100, y: 100 });
-                window.safeStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots['shot']));
+                localStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots['shot']));
                 if (typeof updateAllCanvases === 'function') updateAllCanvases('shot');
             }
         }
@@ -2366,7 +2352,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const press = document.getElementById('pressure')?.value || '29.92';
             const da = document.getElementById('owc-da')?.value || '0';
 
-            return `TACTICAL WEATHER REPORT:\n<span class="text-white">TEMP:</span> ${temp}Â°F | <span class="text-white">WIND:</span> ${wind} MPH\n<span class="text-white">DA:</span> ${da} FT | <span class="text-white">BARO:</span> ${press} inHg\nEnvironmental data synced to core.`;
+            return `TACTICAL WEATHER REPORT:\n<span class="text-white">TEMP:</span> ${temp}°F | <span class="text-white">WIND:</span> ${wind} MPH\n<span class="text-white">DA:</span> ${da} FT | <span class="text-white">BARO:</span> ${press} inHg\nEnvironmental data synced to core.`;
         }
 
         // Analyze / Data Check Intent
@@ -2821,7 +2807,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.SessionHistory = {
         getHistory: function () {
             try {
-                return JSON.parse(window.safeStorage.getItem(SESSION_HISTORY_KEY)) || [];
+                return JSON.parse(localStorage.getItem(SESSION_HISTORY_KEY)) || [];
             } catch (e) {
                 return [];
             }
@@ -2859,12 +2845,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 history.pop();
             }
 
-            window.safeStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(history));
+            localStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(history));
             return session;
         },
 
         clearHistory: function () {
-            window.safeStorage.removeItem(SESSION_HISTORY_KEY);
+            localStorage.removeItem(SESSION_HISTORY_KEY);
         },
 
         getTrends: function () {
@@ -3135,7 +3121,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            window.safeStorage.setItem(ACTIVE_PROFILE_KEY, searchId.toString());
+            localStorage.setItem(ACTIVE_PROFILE_KEY, searchId.toString());
             addChatBubble('bot', ` Loaded profile: ${profile.name}`);
 
             // Update dropdown selections
@@ -3146,7 +3132,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         getActive: function () {
-            const val = window.safeStorage.getItem(ACTIVE_PROFILE_KEY);
+            const val = localStorage.getItem(ACTIVE_PROFILE_KEY);
             return val ? parseInt(val) : null;
         },
 
@@ -3420,11 +3406,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === Tactical Card Model Library ===
-    let currentCardModel = window.safeStorage.getItem('tacticalCardModel') || 'standard';
+    let currentCardModel = localStorage.getItem('tacticalCardModel') || 'standard';
 
     window.setCardModel = function (modelId) {
         currentCardModel = modelId;
-        window.safeStorage.setItem('tacticalCardModel', modelId);
+        localStorage.setItem('tacticalCardModel', modelId);
         syncCardModelUI();
         generateQuickDope();
     };
@@ -3799,10 +3785,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update Weather Station UI if open
                 const wsTemp = document.getElementById('ws-temp');
                 if (wsTemp) {
-                    wsTemp.textContent = `${weather.temp}Â°F`;
+                    wsTemp.textContent = `${weather.temp}°F`;
                     document.getElementById('ws-hum').textContent = `${weather.humidity}%`;
                     document.getElementById('ws-press').textContent = `${weather.pressure} IN`;
-                    document.getElementById('ws-wind').textContent = `${weather.windSpd} MPH @ ${weather.windDir}Â°`;
+                    document.getElementById('ws-wind').textContent = `${weather.windSpd} MPH @ ${weather.windDir}°`;
                     document.getElementById('ws-msl').textContent = `${weather.msl} FT`;
                     document.getElementById('ws-asl').textContent = `${weather.asl} FT`;
                     document.getElementById('ws-da').textContent = `${liveDA.toLocaleString()} FT`;
@@ -3887,7 +3873,7 @@ window.saveDopeToVault = function () {
         const base64Image = canvas.toDataURL('image/jpeg', 0.6);
 
         // 4. Save to LocalStorage
-        const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
+        const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
         const newEntry = {
             id: Date.now(),
             name: dopeName,
@@ -3897,7 +3883,7 @@ window.saveDopeToVault = function () {
 
         try {
             vault.unshift(newEntry); // Newest first
-            window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+            localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
 
             // LOG SESSION ACTION
             if (typeof SessionLogger !== 'undefined') {
@@ -3928,7 +3914,7 @@ window.renderDopeVault = function () {
     const emptyState = document.getElementById('dope-vault-empty');
     if (!container) return;
 
-    const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
+    const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
 
     if (vault.length === 0) {
         container.innerHTML = "";
@@ -3990,9 +3976,9 @@ window.deleteSelectedDope = function () {
 
     if (!confirm(`DELETE ${checkedIds.length} SELECTED DROP CHARTS?`)) return;
 
-    let vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
+    let vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
     vault = vault.filter(i => !checkedIds.includes(i.id));
-    window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+    localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
 
     window.renderDopeVault();
 };
@@ -4056,14 +4042,14 @@ window.viewDopeImage = function (base64) {
 
 window.deleteDope = function (id) {
     if (!confirm("DELETE THIS DROP CHART?")) return;
-    let vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
+    let vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
     vault = vault.filter(i => i.id !== id);
-    window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+    localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
     window.renderDopeVault();
 };
 
 window.exportDope = function (id) {
-    const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
+    const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
     const item = vault.find(i => i.id === id);
     if (!item) return;
 
@@ -4089,7 +4075,7 @@ window.importDope = function () {
             const dopeName = prompt("ENTER NAME FOR IMPORTED IMAGE:", file.name.split('.')[0]);
             if (!dopeName) return;
 
-            const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
+            const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
             const newEntry = {
                 id: Date.now(),
                 name: dopeName,
@@ -4097,7 +4083,7 @@ window.importDope = function () {
                 image: base64
             };
             vault.unshift(newEntry);
-            window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+            localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
             window.renderDopeVault();
         };
         reader.readAsDataURL(file);
@@ -4186,7 +4172,7 @@ window.switchIntelTab = function (tabName) {
             }, 250);
         } else if (tabName === 'weather-station') {
             // Auto-trigger weather lookup if first time opening
-            if (!document.getElementById('ws-temp').textContent.includes('Â°F')) {
+            if (!document.getElementById('ws-temp').textContent.includes('°F')) {
                 setTimeout(() => {
                     if (typeof window.fetchLiveWeather === 'function') window.fetchLiveWeather();
                 }, 500);
@@ -4214,18 +4200,18 @@ console.log(">> [SCRIPT_JS] FULL LOAD COMPLETE <<");
 window.scopeCamStream = null;
 window.scopeRotation = 0;
 // --- BORESIGHT ALIGNMENT STATE ---
-window.reticleOffset = JSON.parse(window.safeStorage.getItem('trc_reticle_offset') || '{"x":0,"y":0}');
+window.reticleOffset = JSON.parse(localStorage.getItem('trc_reticle_offset') || '{"x":0,"y":0}');
 
 window.nudgeReticle = function (dx, dy) {
     window.reticleOffset.x += dx;
     window.reticleOffset.y += dy;
-    window.safeStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
+    localStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
     window.applyReticleOffset();
 };
 
 window.resetReticle = function () {
     window.reticleOffset = { x: 0, y: 0 };
-    window.safeStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
+    localStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
     window.applyReticleOffset();
 };
 
@@ -5665,7 +5651,7 @@ window.resetWorkCenter = function () {
     }
 
     // Clear Saved State
-    window.safeStorage.removeItem('trc_owc_state');
+    localStorage.removeItem('trc_owc_state');
 
     console.log("[OWC] Work Center Reset.");
     window.updateOWC();
@@ -5698,8 +5684,8 @@ window.loadAllData = function () {
     console.log("Loading Persistent Data...");
 
     // 1. Load & Migrate Ammo
-    const legacyAmmo = window.safeStorage.getItem('ammoBatches');
-    const proAmmo = window.safeStorage.getItem('trc_ammo_batches');
+    const legacyAmmo = localStorage.getItem('ammoBatches');
+    const proAmmo = localStorage.getItem('trc_ammo_batches');
 
     let batches = [];
     if (proAmmo) {
@@ -5711,7 +5697,7 @@ window.loadAllData = function () {
     window.ammoBatchStore = batches;
 
     // 2. Load Drills
-    const savedDrills = window.safeStorage.getItem('trc_drills');
+    const savedDrills = localStorage.getItem('trc_drills');
     if (savedDrills) {
         window.drillStore = JSON.parse(savedDrills);
     } else {
@@ -5737,9 +5723,9 @@ window.loadAllData = function () {
     });
 
     if (migrated || legacyAmmo) {
-        window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
+        localStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
         // Cleanup legacy after first successful migration
-        if (legacyAmmo) window.safeStorage.removeItem('ammoBatches');
+        if (legacyAmmo) localStorage.removeItem('ammoBatches');
     }
 
     window.renderAmmoLog();
@@ -5752,7 +5738,7 @@ window.renderAmmoLog = function () {
     container.innerHTML = '';
 
     // Standardize on 'trc_ammo_batches'
-    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
+    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
     window.ammoBatchStore = batches;
 
     if (batches.length === 0) {
@@ -5768,7 +5754,7 @@ window.renderAmmoLog = function () {
     }
 
     batches.forEach((batch, index) => {
-        const activeBatchId = window.safeStorage.getItem('trc_active_batch_id');
+        const activeBatchId = localStorage.getItem('trc_active_batch_id');
         const isActive = batch && batch.id && batch.id.toString() === activeBatchId;
 
         const card = document.createElement('div');
@@ -5849,8 +5835,8 @@ window.renderAmmoLog = function () {
     if (window.lucide) lucide.createIcons();
 
     // Save back ensuring IDs are persisted if we generated new ones
-    window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
-    window.safeStorage.setItem('ammoBatches', JSON.stringify(batches));
+    localStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
+    localStorage.setItem('ammoBatches', JSON.stringify(batches));
 };
 
 window.exportAmmoManifestAsImage = function () {
@@ -5897,7 +5883,7 @@ window.exportAmmoManifestAsImage = function () {
 
 
 window.shareAmmoBatchAsImage = function (batchId) {
-    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || '[]');
+    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || '[]');
     const batch = batches.find(b => b.id === batchId);
     if (!batch) return;
 
@@ -5991,9 +5977,9 @@ window.addNewAmmoBatch = function () {
         name, rifle, bullet, type, mv, bc, zero, powder, grains, qty, brass
     };
 
-    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
+    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
     batches.push(newBatch);
-    window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
+    localStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
     window.ammoBatchStore = batches;
 
     window.renderAmmoLog();
@@ -6053,14 +6039,14 @@ window.saveNewDrill = function (name, desc, par) {
         hits: 0
     };
     window.drillStore.push(newDrill);
-    window.safeStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
+    localStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
     window.renderDrills();
 };
 
 window.deleteDrill = function (id) {
     if (confirm("Delete Drill?")) {
         window.drillStore = window.drillStore.filter(d => d.id !== id);
-        window.safeStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
+        localStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
         window.renderDrills();
     }
 };
@@ -6096,7 +6082,7 @@ window.saveAmmoBatch = function () {
         window.ammoBatchStore.push(newBatch);
     }
 
-    window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
+    localStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
     window.renderAmmoLog();
     document.getElementById('ammo-batch-modal').classList.add('hidden');
 };
@@ -6104,7 +6090,7 @@ window.saveAmmoBatch = function () {
 window.deleteAmmoBatch = function (id) {
     if (confirm("Delete this batch record?")) {
         window.ammoBatchStore = window.ammoBatchStore.filter(b => b.id !== id);
-        window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
+        localStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
         window.renderAmmoLog();
     }
 };
@@ -6115,7 +6101,7 @@ window.loadBatchToSolver = function (id) {
         console.log(`[Ammo] Loading Batch: ${batch.name} to Solver...`);
 
         // 1. Set Active Batch in State
-        window.safeStorage.setItem('trc_active_batch_id', id.toString());
+        localStorage.setItem('trc_active_batch_id', id.toString());
 
         // Standardize values (Fallbacks)
         const mvVal = batch.mv || batch.speed || 2700;
@@ -6336,7 +6322,7 @@ const tacticalDrills = [
         color: 'emerald',
         desc: 'Unknown Distance ranging. Use your reticle and map tools to estimate range and solve.',
         difficulty: 'ADVANCED',
-        goal: 'Â±25 Yard Estimation'
+        goal: '±25 Yard Estimation'
     },
     {
         id: 'stress-fire',
@@ -6483,8 +6469,8 @@ window.getTacticalContext = function (source = 'smart') {
     const hudZero = parseFloat(document.getElementById('owc-zero')?.value) || parseFloat(document.getElementById('zero')?.value) || 100;
     const hudBc = parseFloat(document.getElementById('owc-bc')?.value) || parseFloat(document.getElementById('g1')?.value) || 0.450;
 
-    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
-    const activeBatchId = window.safeStorage.getItem('trc_active_batch_id');
+    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
+    const activeBatchId = localStorage.getItem('trc_active_batch_id');
     const batch = batches.find(b => b.id.toString() === activeBatchId);
 
     // SOURCE LABELING LOGIC
@@ -6533,12 +6519,12 @@ window.saveWorkCenterState = function () {
         alt: document.getElementById('owc-alt')?.value || '',
         slope: document.getElementById('owc-slope')?.value || ''
     };
-    window.safeStorage.setItem('trc_owc_state', JSON.stringify(state));
+    localStorage.setItem('trc_owc_state', JSON.stringify(state));
     // console.log("[OWC] State Saved", state);
 };
 
 window.loadWorkCenterState = function () {
-    const saved = window.safeStorage.getItem('trc_owc_state');
+    const saved = localStorage.getItem('trc_owc_state');
     if (!saved) return;
 
     try {
@@ -6677,7 +6663,7 @@ window.generateQuickDope = function () {
         // 3. Render
         if (typeof window.renderDropTable === 'function') {
             window.renderDropTable(data, context);
-            window.safeStorage.setItem('trc_last_dope', JSON.stringify(data));
+            localStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
         // 4. Log
@@ -6747,9 +6733,9 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
                     </div>
                     <div class="flex gap-2 flex-wrap justify-center">
                         <div class="px-4 py-1.5 bg-black/5 border border-black/10 rounded flex gap-4 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                            <span>WIND: <b class="text-orange-700 font-black">${wDir}Â°</b></span>
+                            <span>WIND: <b class="text-orange-700 font-black">${wDir}°</b></span>
                             <span>SPD: <b class="text-orange-700 font-black">${wSpeed} MPH</b></span>
-                            <span>LOS: <b class="text-blue-700 font-black">${losVal}Â°</b></span>
+                            <span>LOS: <b class="text-blue-700 font-black">${losVal}°</b></span>
                         </div>
                         <div class="px-4 py-1.5 bg-zinc-800/10 border border-black/10 rounded flex items-center gap-2">
                              <span class="text-[9px] text-zinc-600 font-black uppercase tracking-widest">SOURCE:</span>
@@ -6854,20 +6840,20 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
 };
 
 // let compassInitialized = false; // Fixed: Duplicate declaration
-let compassOffset = parseFloat(window.safeStorage.getItem('trc_compass_offset')) || 0;
+let compassOffset = parseFloat(localStorage.getItem('trc_compass_offset')) || 0;
 
 window.calibrateCompassOffset = function () {
     // Current heading is what the phone THINKS is North.
     // We want to set this heading as the New North (0 degrees).
     const currentHeadingText = document.getElementById('hud-heading-val')?.textContent || "0";
-    const currentHeading = parseFloat(currentHeadingText.replace('Â°', '')) || 0;
+    const currentHeading = parseFloat(currentHeadingText.replace('°', '')) || 0;
 
     // The offset is simply the negative of the current heading
     // so that (currentHeading + offset) % 360 = 0
     // We adjust the current global offset relative to what the user JUST saw.
     compassOffset = (compassOffset - currentHeading + 720) % 360;
 
-    window.safeStorage.setItem('trc_compass_offset', compassOffset);
+    localStorage.setItem('trc_compass_offset', compassOffset);
 
     // Provide visual feedback
     const btn = event?.currentTarget;
@@ -6887,7 +6873,7 @@ window.calibrateCompassOffset = function () {
 
 window.resetCompassOffset = function () {
     compassOffset = 0;
-    window.safeStorage.removeItem('trc_compass_offset');
+    localStorage.removeItem('trc_compass_offset');
     console.log("[COMPASS] Offset Reset to Factory");
 };
 
@@ -6979,7 +6965,7 @@ function handleOrientation(event) {
     if (card) card.style.transform = `rotate(${cardRotation}deg)`;
 
     const hVal = document.getElementById('hud-heading-val');
-    if (hVal) hVal.textContent = Math.round(heading).toString().padStart(3, '0') + 'Â°';
+    if (hVal) hVal.textContent = Math.round(heading).toString().padStart(3, '0') + '°';
 
     const cDir = document.getElementById('hud-cardinal-val');
     if (cDir) {
@@ -7903,7 +7889,7 @@ function updateMetadata() {
         window.addEventListener('deviceorientationabsolute', (e) => {
             const heading = e.alpha ? Math.round(e.alpha) : 0;
             const headingDisplay = document.getElementById('target-heading-display');
-            if (headingDisplay) headingDisplay.textContent = `HDG: ${heading}Â°`;
+            if (headingDisplay) headingDisplay.textContent = `HDG: ${heading}°`;
             window.currentHeading = heading;
         }, { once: true });
     }
@@ -7913,7 +7899,7 @@ function updateMetadata() {
         window.addEventListener('deviceorientation', (e) => {
             const pitch = e.beta ? Math.round(e.beta) : 0;
             const angleDisplay = document.getElementById('target-angle-display');
-            if (angleDisplay) angleDisplay.textContent = `ANG: ${pitch}Â°`;
+            if (angleDisplay) angleDisplay.textContent = `ANG: ${pitch}°`;
             window.currentAngle = pitch;
         }, { once: true });
     }
@@ -7937,7 +7923,7 @@ window.captureTargetPhoto = async function () {
         const btn = document.getElementById('target-cam-capture');
         if (btn) {
             console.log("[CAPTURE] Button found, changing to yellow");
-            btn.textContent = 'â³ CAPTURING...';
+            btn.textContent = '? CAPTURING...';
             btn.style.backgroundColor = '#ca8a04'; // yellow-600
             btn.disabled = true;
         } else {
@@ -8021,7 +8007,7 @@ window.captureTargetPhoto = async function () {
             // Visual feedback - success
             if (btn) {
                 console.log("[CAPTURE] Changing button to green");
-                btn.textContent = 'âœ“ CAPTURED!';
+                btn.textContent = '? CAPTURED!';
                 btn.style.backgroundColor = '#16a34a'; // green-600
                 setTimeout(() => {
                     btn.textContent = 'CAPTURE';
@@ -8131,7 +8117,7 @@ function renderVault(targets) {
                     <div class="p-2 space-y-1">
                         <div class="text-[9px] font-mono text-zinc-400">
                             <div>GPS: ${target.gps.lat}, ${target.gps.lon}</div>
-                            <div>HDG: ${target.heading}Â° | ANG: ${target.angle}Â°</div>
+                            <div>HDG: ${target.heading}° | ANG: ${target.angle}°</div>
                         </div>
                         <div class="text-[8px] text-zinc-500">${dateStr}</div>
                     </div>
@@ -8181,7 +8167,7 @@ let measureEnd = null;
 let currentReticleType = 'box';
 let poiPins = [];
 let isPOITagging = false;
-let cameraFOV = parseFloat(window.safeStorage.getItem('trc_camera_fov')) || 65;
+let cameraFOV = parseFloat(localStorage.getItem('trc_camera_fov')) || 65;
 
 window.calibrateFOV = function (knownSizeIn, distanceYds) {
     if (!measureStart || !measureEnd || !knownSizeIn || !distanceYds) {
@@ -8197,7 +8183,7 @@ window.calibrateFOV = function (knownSizeIn, distanceYds) {
     const dimensionRatio = boxHeight / window.imageHeight;
     cameraFOV = (milReading * 0.0573) / dimensionRatio;
 
-    window.safeStorage.setItem('trc_camera_fov', cameraFOV);
+    localStorage.setItem('trc_camera_fov', cameraFOV);
     console.log("[TARGET] FOV Calibrated to:", cameraFOV);
     calculateMilMoa();
 };
@@ -8278,7 +8264,7 @@ window.openTargetDetail = async function (targetId) {
         document.getElementById('detail-gps').textContent =
             `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
         document.getElementById('detail-heading-angle').textContent =
-            `${currentTargetData.heading}Â° / ${currentTargetData.angle}Â°`;
+            `${currentTargetData.heading}° / ${currentTargetData.angle}°`;
 
         // Setup canvas for measurement overlay
         img.onload = () => {
@@ -8326,7 +8312,7 @@ window.toggleCalibrationMode = function () {
 
     if (calibrationMode) {
         calBtn.style.backgroundColor = '#a855f7'; // purple-500
-        calBtn.textContent = 'âœ“ CALIBRATING';
+        calBtn.textContent = '? CALIBRATING';
         measureBtn.style.backgroundColor = '#2563eb';
         measureBtn.innerHTML = '<i data-lucide="ruler" class="w-3 h-3 inline mr-1"></i> MEASURE';
         instructions.classList.remove('hidden');
@@ -8348,7 +8334,7 @@ window.toggleMeasureMode = function () {
 
     if (measureMode) {
         measureBtn.style.backgroundColor = '#16a34a'; // green-600
-        measureBtn.textContent = 'âœ“ MEASURING';
+        measureBtn.textContent = '? MEASURING';
         calBtn.style.backgroundColor = '#9333ea';
         calBtn.innerHTML = '<i data-lucide="crosshair" class="w-3 h-3 inline mr-1"></i> CALIBRATE';
         instructions.classList.remove('hidden');
@@ -8606,13 +8592,13 @@ window.calculateRange = function () {
     const statusEl = document.getElementById('range-status');
     if (statusEl) {
         if (rangeYards < 50) {
-            statusEl.textContent = 'âš ï¸ TOO CLOSE';
+            statusEl.textContent = '?? TOO CLOSE';
             statusEl.className = 'text-[7px] font-black text-red-500';
         } else if (rangeYards >= 100 && rangeYards <= 800) {
-            statusEl.textContent = 'âœ“ OPTIMAL';
+            statusEl.textContent = '? OPTIMAL';
             statusEl.className = 'text-[7px] font-black text-green-500';
         } else if (rangeYards > 800) {
-            statusEl.textContent = 'âš ï¸ EXTREME';
+            statusEl.textContent = '?? EXTREME';
             statusEl.className = 'text-[7px] font-black text-yellow-500';
         } else {
             statusEl.textContent = '';
@@ -8706,13 +8692,13 @@ function initPersistence() {
     inputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            const saved = window.safeStorage.getItem('trc_save_' + id);
+            const saved = localStorage.getItem('trc_save_' + id);
             if (saved !== null) {
                 el.value = saved;
             }
 
             el.addEventListener('input', (e) => {
-                window.safeStorage.setItem('trc_save_' + id, e.target.value);
+                localStorage.setItem('trc_save_' + id, e.target.value);
             });
         }
     });
@@ -8781,11 +8767,11 @@ window.saveWorkCenterState = function () {
         atmosMode: window.owcAtmosMode,
         liveSync: window.owcLiveSync
     };
-    window.safeStorage.setItem('trc_owc_state', JSON.stringify(state));
+    localStorage.setItem('trc_owc_state', JSON.stringify(state));
 };
 
 window.loadWorkCenterState = function () {
-    const saved = window.safeStorage.getItem('trc_owc_state');
+    const saved = localStorage.getItem('trc_owc_state');
     if (!saved) return;
 
     try {
@@ -8910,8 +8896,8 @@ window.getTacticalContext = function (source = 'smart') {
     const hudZero = parseFloat(document.getElementById('owc-zero')?.value) || parseFloat(document.getElementById('zero')?.value) || 100;
     const hudBc = parseFloat(document.getElementById('owc-bc')?.value) || parseFloat(document.getElementById('g1')?.value) || 0.450;
 
-    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
-    const activeBatchId = window.safeStorage.getItem('trc_active_batch_id');
+    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
+    const activeBatchId = localStorage.getItem('trc_active_batch_id');
     const batch = batches.find(b => b.id.toString() === activeBatchId);
 
     if (source === 'batch' && batch) {
@@ -8974,7 +8960,7 @@ window.generateQuickDope = function () {
         if (typeof window.renderDropTable === 'function') {
             // Pass the full context to render so we have inclination/weather/profile data
             window.renderDropTable(data, context);
-            window.safeStorage.setItem('trc_last_dope', JSON.stringify(data));
+            localStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
         // 4. Log
@@ -9043,12 +9029,12 @@ window.renderDropTable = function (data, metadata = "QUICK DOPE", weatherLegacy 
                 
                 <div class="flex gap-2">
                     <div class="px-2 py-0.5 bg-orange-500/5 border border-orange-500/10 rounded flex gap-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter shadow-inner">
-                        <span>WIND: <b class="text-orange-400 font-black">${wDir}Â°</b></span>
+                        <span>WIND: <b class="text-orange-400 font-black">${wDir}°</b></span>
                         <span>SPD: <b class="text-orange-400 font-black">${wSpeed} MPH</b></span>
                     </div>
                     <div class="px-2 py-0.5 bg-zinc-800/40 border border-zinc-700/50 rounded flex items-center gap-1 text-[7px] font-black text-zinc-400 uppercase tracking-tighter">
                          <span>LOS:</span>
-                         <span class="text-zinc-200 font-black">${losVar}Â°</span>
+                         <span class="text-zinc-200 font-black">${losVar}°</span>
                     </div>
                 </div>
 

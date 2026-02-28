@@ -21,11 +21,6 @@ const idb = {
         }
         if (this.db) return this.db;
         return new Promise((resolve, reject) => {
-            const timeoutId = setTimeout(() => {
-                console.error("[IDB] Connection timed out after 2s.");
-                reject(new Error("Timeout"));
-            }, 2000);
-
             try {
                 const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -40,20 +35,17 @@ const idb = {
                 };
 
                 request.onsuccess = (event) => {
-                    clearTimeout(timeoutId);
                     this.db = event.target.result;
                     resolve(this.db);
                 };
 
                 request.onerror = (event) => {
-                    clearTimeout(timeoutId);
                     const error = event.target.error;
                     console.error("[IDB] Database error:", error);
                     window.IDB_CRITICAL_ERROR = error;
                     reject(error);
                 };
             } catch (e) {
-                clearTimeout(timeoutId);
                 console.error("[IDB] Initial open failed:", e);
                 reject(e);
             }
@@ -108,7 +100,7 @@ const idb = {
         console.log("[IDB] Checking for legacy data to migrate...");
 
         // 1. Migrate Range Card Profiles
-        const legacyProfiles = window.safeStorage.getItem('rangeCardProfiles');
+        const legacyProfiles = localStorage.getItem('rangeCardProfiles');
         if (legacyProfiles) {
             try {
                 const profiles = JSON.parse(legacyProfiles);
@@ -119,7 +111,7 @@ const idb = {
                         await this.set(STORES.PROFILES, name, data);
                     }
                     // Clear old data to prevent double migration
-                    window.safeStorage.removeItem('rangeCardProfiles');
+                    localStorage.removeItem('rangeCardProfiles');
                     console.log("[IDB] Profile migration complete.");
                 }
             } catch (e) {
@@ -128,7 +120,7 @@ const idb = {
         }
 
         // 2. Migrate Weapon Profiles
-        const legacyWeapons = window.safeStorage.getItem('weaponProfiles');
+        const legacyWeapons = localStorage.getItem('weaponProfiles');
         if (legacyWeapons) {
             try {
                 const weapons = JSON.parse(legacyWeapons);
@@ -138,7 +130,7 @@ const idb = {
                     for (const [name, data] of Object.entries(weapons)) {
                         await this.set(STORES.WEAPONS, name, data);
                     }
-                    window.safeStorage.removeItem('weaponProfiles');
+                    localStorage.removeItem('weaponProfiles');
                     console.log("[IDB] Weapon migration complete.");
                 }
             } catch (e) {
