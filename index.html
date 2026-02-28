@@ -8,6 +8,7 @@
         content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Apex Ballistics</title>
     <link rel="manifest" href="manifest.json">
+    <!-- NUCLEAR CLEANUP (DISABLED)
     <script>
         // NUCLEAR CLEANUP - Forces a fresh start by wiping all Service Workers and Caches
         (async function () {
@@ -33,6 +34,7 @@
             }
         })();
     </script>
+    -->
     <script src="tailwind.min.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
@@ -173,6 +175,20 @@
             border: none !important;
             pointer-events: auto !important;
             z-index: 1000 !important;
+        }
+
+        .range-label {
+            background: rgba(15, 23, 42, 0.9) !important;
+            border: 1px solid #3b82f6 !important;
+            border-radius: 4px !important;
+            color: #fff !important;
+            font-weight: 900 !important;
+            font-size: 10px !important;
+            padding: 2px 6px !important;
+            white-space: nowrap !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+            text-transform: uppercase !important;
+            pointer-events: none !important;
         }
 
         .bg-scan-line {
@@ -4150,6 +4166,7 @@
             <script src="card_templates.js"></script>
             <script src="phase3_functions.js"></script>
             <script> lucide.createIcons(); </script>
+            <!-- SERVICE WORKER (DISABLED FOR STABILITY TESTING)
             <script>
                 if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
                     window.addEventListener('load', () => {
@@ -4159,6 +4176,7 @@
                     });
                 }
             </script>
+            -->
 </body>
 
 </html>
