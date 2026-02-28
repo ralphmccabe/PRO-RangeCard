@@ -72,10 +72,14 @@ window.copyFinalDope = function (btn) {
         if (!btn) return;
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-neon-green"></i>';
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) {
+            try { lucide.createIcons(); } catch (e) { console.warn("Lucide failed:", e); }
+        }
         setTimeout(() => {
             btn.innerHTML = originalHTML;
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) {
+                try { lucide.createIcons(); } catch (e) { console.warn("Lucide failed:", e); }
+            }
         }, 1500);
     }).catch(err => console.error("[Copy] Final Dope Error:", err));
 };
@@ -95,10 +99,14 @@ window.copyLoadData = function (btn) {
         if (!btn) return;
         const originalHTML = btn.innerHTML;
         btn.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-neon-green"></i>';
-        if (window.lucide) lucide.createIcons();
+        if (window.lucide) {
+            try { lucide.createIcons(); } catch (e) { console.warn("Lucide failed:", e); }
+        }
         setTimeout(() => {
             btn.innerHTML = originalHTML;
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide) {
+                try { lucide.createIcons(); } catch (e) { console.warn("Lucide failed:", e); }
+            }
         }, 1500);
     }).catch(err => console.error("[Copy] Load Data Error:", err));
 };
@@ -150,6 +158,10 @@ document.addEventListener('DOMContentLoaded', () => {
         { angleId: 'shooting-angle-10', rangeId: 'compass-range-10', label: 'T10 Shot:', mobileId: 'mobile-display-shooting-angle-10' }
     ];
     // Use window scope for these refs so global functions can see them if needed
+    window.targetConfigs = targetConfigs;
+    window.owcLiveSync = true;
+    window.owcUnitMode = 'MIL'; // [NEW] Default Unit Mode
+    window.owcAtmosMode = 'da';
     window.chatHistory = document.getElementById('ai-chat-history');
     window.chatInput = document.getElementById('ai-chat-input');
 
@@ -162,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         'header-notes', 'shooter-company', 'session-category',
         'mission-id', 'team-id', 'sniper-name', 'spotter-name', 'radio-freq', 'callsign', 'sector-fire',
         'date', 'time', 'caliber', 'zero', 'barrel', 'bullet', 'load', 'powder',
-        'primer', 'col', 'rings', 'velocity', 'g1', 'environment-summary', 'temperature', 'humidity', 'pressure', 'wind-speed', 'cosine', 'misc', 'targetSize', 'groupSize', 'elevation', 'hold-data', 'final-dope',
+        'primer', 'col', 'rings', 'velocity', 'g1', 'environment-summary', 'temperature', 'humidity', 'pressure', 'wind-speed', 'wind-dir', 'cosine', 'misc', 'targetSize', 'groupSize', 'elevation', 'hold-data', 'final-dope',
         'rifle-notes', 'wind-notes', 'scope-notes', 'shooting-angle', 'direction-notes', 'lrf-notes', 'compass-range',
         'shooting-angle-2', 'compass-range-2', 'shooting-angle-3', 'compass-range-3',
         'shooting-angle-4', 'compass-range-4', 'shooting-angle-5', 'compass-range-5',
@@ -639,7 +651,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const openLibraryBtn = document.getElementById('openLibraryBtn');
 
     if (saveProfileBtn) {
-        saveProfileBtn.onclick = () => {
+        saveProfileBtn.onclick = async () => {
             const name = prompt("Enter profile name to save tactical record:");
             if (!name) return;
 
@@ -673,7 +685,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // Capture with onclone to ensure canvas drawings are baked into the snapshot
             html2canvas(container, {
-                scale: 1.5, // Reduced from 2.0 to significantly boost mobile performance
+                scale: 2.5, // Restored to 2.5x
                 backgroundColor: '#ffffff',
                 useCORS: true,
                 logging: false,
@@ -682,6 +694,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 windowWidth: 1000,
                 windowHeight: 750,
                 onclone: (clonedDoc) => {
+                    // 1. HIDE IMAGE OVERLAY FOR CLEAN CAPTURE (Avoid Generational Loss)
+                    // This ensures we capture the crisp HTML instead of a blurry previous snapshot.
+                    const overlay = clonedDoc.getElementById('cardImageOverlay');
+                    if (overlay) overlay.style.display = 'none';
+
+                    // 2. ENFORCE "HARD & CRISP" STYLING IN CLONE
+                    const container = clonedDoc.getElementById('card-container');
+                    if (container) {
+                        container.style.webkitFontSmoothing = 'none';
+                        container.style.mozOsxFontSmoothing = 'unset';
+                        container.style.textRendering = 'optimizeLegibility';
+                    }
+
                     // Force replace interactive canvases with static images for the render
                     const canvasIds = ['pencil-canvas', 'compass-vector', 'canvas-hold', 'canvas-shot'];
                     canvasIds.forEach(id => {
@@ -706,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         }
                     });
                 }
-            }).then(canvas => {
+            }).then(async canvas => {
                 // Restore layout immediately
                 if (wasHidden) {
                     previewPanel.classList.add('hidden');
@@ -715,8 +740,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 container.style.transform = originalTransform;
                 window.scrollTo(0, originalScrollY);
 
-                // 4. Optimize Snapshot Data (Use JPEG for significant size reduction)
-                const snapshot = canvas.toDataURL("image/jpeg", 0.8);
+                // 4. Optimize Snapshot Data (High Quality JPEG)
+                const snapshot = canvas.toDataURL("image/jpeg", 0.9);
                 const data = { snapshot };
 
                 inputs.forEach(id => {
@@ -739,27 +764,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (!data.date) data.date = new Date().toLocaleDateString();
                 if (!data.time) data.time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-                const ps = getProfiles();
+                const ps = await getProfiles();
                 ps[name] = data;
 
+                // Save to IndexedDB
+                await window.TRC_IDB.set('rangeCardProfiles', name, data);
+
                 // Save asynchronously to prevent blocking the UI thread
-                setTimeout(() => {
-                    try {
-                        localStorage.setItem('rangeCardProfiles', JSON.stringify(ps));
-                        console.log(`[SYS] Profile "${name}" archived.`);
+                console.log(`[SYS] Profile "${name}" archived in IDB.`);
+                await openLibrary();
+                await previewProfile(name);
 
-                        // Instantly open library AFTER save is confirmed
-                        openLibrary();
-                        previewProfile(name);
-
-                        if (typeof addChatBubble === 'function') {
-                            addChatBubble('bot', ` Record "${name}" secured.`);
-                        }
-                    } catch (e) {
-                        console.error("Storage error:", e);
-                        alert("Storage limit reached. Try deleting old records.");
-                    }
-                }, 100);
+                if (typeof addChatBubble === 'function') {
+                    addChatBubble('bot', ` Record "${name}" secured.`);
+                }
             }).catch(err => {
                 if (wasHidden) {
                     previewPanel.classList.add('hidden');
@@ -850,12 +868,12 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     }
 
-    window.getProfiles = function () {
-        return JSON.parse(localStorage.getItem('rangeCardProfiles') || '{}');
+    window.getProfiles = async function () {
+        return await window.TRC_IDB.getAll('rangeCardProfiles');
     };
 
-    window.updateProfileList = function () {
-        const ps = window.getProfiles();
+    window.updateProfileList = async function () {
+        const ps = await window.getProfiles();
         const names = Object.keys(ps);
         const profileSelect = document.getElementById('profileSelect');
         const libraryList = document.getElementById('libraryList');
@@ -903,8 +921,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.previewProfile = function (name) {
-        const ps = window.getProfiles();
+    window.previewProfile = async function (name) {
+        const ps = await window.getProfiles();
         const data = ps[name];
         if (!data) return;
 
@@ -1002,12 +1020,12 @@ document.addEventListener('DOMContentLoaded', () => {
         if (loadBtn) loadBtn.onclick = () => { window.loadProfile(name); window.closeLibrary(); };
 
         const delBtn = document.getElementById('deleteSelectedBtn');
-        if (delBtn) delBtn.onclick = () => {
+        if (delBtn) delBtn.onclick = async () => {
             if (confirm(`Trash record "${name}"?`)) {
-                const ps_new = window.getProfiles();
+                const ps_new = await window.getProfiles();
                 delete ps_new[name];
-                localStorage.setItem('rangeCardProfiles', JSON.stringify(ps_new));
-                window.updateProfileList();
+                await window.TRC_IDB.delete('rangeCardProfiles', name);
+                await window.updateProfileList();
                 window.resetPreview();
             }
         };
@@ -1020,8 +1038,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (emptyState) emptyState.classList.remove('hidden');
     };
 
-    window.loadProfile = function (name) {
-        const ps = window.getProfiles();
+    window.loadProfile = async function (name) {
+        const ps = await window.getProfiles();
         const data = ps[name];
         if (!data) return;
 
@@ -1125,18 +1143,18 @@ document.addEventListener('DOMContentLoaded', () => {
             importFileInput.click();
         };
 
-        importFileInput.onchange = (e) => {
+        importFileInput.onchange = async (e) => {
             const files = e.target.files;
             if (!files || files.length === 0) return;
 
-            const profiles = getProfiles();
+            const profiles = await getProfiles();
             let imported = 0;
             const totalFiles = files.length;
 
             Array.from(files).forEach(file => {
                 if (file.type.startsWith('image/')) {
                     const reader = new FileReader();
-                    reader.onload = (event) => {
+                    reader.onload = async (event) => {
                         const imageName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
 
                         profiles[imageName] = {
@@ -1147,11 +1165,11 @@ document.addEventListener('DOMContentLoaded', () => {
                             caliber: ' Imported Image'
                         };
 
-                        localStorage.setItem('rangeCardProfiles', JSON.stringify(profiles));
+                        await window.TRC_IDB.set('rangeCardProfiles', imageName, profiles[imageName]);
                         imported++;
 
                         if (imported === totalFiles) {
-                            updateProfileList(); // Refresh library to show new images
+                            await updateProfileList(); // Refresh library to show new images
                             alert(`Successfully imported ${imported} image(s)!`);
                             importFileInput.value = ''; // Reset input
                         }
@@ -1318,7 +1336,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
                     // Draw Text
                     ctx.textAlign = textAlign;
-                    ctx.fillStyle = '#1e3a8a'; // Blue-900
+                    ctx.fillStyle = '#0a214d'; // Deeper Navy for maximum contrast
                     ctx.fillText(labelText, labelX, labelY);
                 });
             }
@@ -1765,8 +1783,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Run load on startup
-    window.addEventListener('load', () => {
-        console.log("[SYS] Integrated Startup v3.7 STABLE...");
+    window.addEventListener('load', async () => {
+        console.log("[SYS] Integrated Startup v4.1 IDB STABLE...");
+        console.log("[SYS] Author: Ralph Mccabe");
+        console.log("------------------------------------------");
+        // 0. Perform IndexedDB Migration (One-time)
+        if (window.TRC_IDB) {
+            await window.TRC_IDB.migrateFromLocalStorage();
+        }
 
         // 1. Initial Data Load (Ammo, Drills, etc.)
         if (typeof window.loadAllData === 'function') {
@@ -2214,66 +2238,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modal) modal.classList.add('hidden');
     };
 
-    // === WORK CENTER SYNC LOGIC ===
-    window.syncOWCWeather = function (forceUpdate = false) {
-        console.log("[OWC] Syncing Global Weather to Work Center...");
+    // === WORK CENTER SYNC LOGIC (Consolidated to global definition) ===
+    // window.syncOWCWeather is now defined globally at the bottom of the file
 
-        // 1. Get Global Values (Left Panel)
-        const gTemp = document.getElementById('temperature')?.value || '59';
-        const gHum = document.getElementById('humidity')?.value || '50';
-        const gPress = document.getElementById('pressure')?.value || '29.92';
-        const gWindSpd = document.getElementById('wind-speed')?.value || '0';
-        const gWindDir = document.getElementById('wind-dir')?.value || '270';
-
-        // 2. Set OWC Values
-        const setVal = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.value = val;
-        };
-
-        setVal('owc-temp', gTemp);
-        setVal('owc-hum', gHum);
-        setVal('owc-press', gPress);
-        // setVal('owc-wind-speed', gWindSpd); // Disabled to prevent overwriting manual wind (Box #11)
-        // setVal('owc-wind-dir', gWindDir);   // Disabled to prevent overwriting manual wind (Box #11)
-
-        // 3. Recalculate DA
-        // We use Altimeter setting (Standard is false for isStationPressure if input is sea level corrected)
-        // If users input uncorrected station pressure, this might need a toggle, but usually 'pressure' input is Altimeter.
-        const alt = parseFloat(document.getElementById('owc-alt')?.value) || 0;
-        const temp = parseFloat(gTemp);
-        const hum = parseFloat(gHum);
-        const press = parseFloat(gPress);
-
-        if (window.calculateDA) {
-            // Using false for isStationPressure assumes input is Altimeter Setting (common for Kestrel/Weather apps)
-            const da = window.calculateDA(alt, temp, hum, press, false);
-            setVal('owc-da', da);
-
-            // Update display if exists
-            const disp = document.getElementById('owc-calc-da-display');
-            if (disp) disp.textContent = da;
-        }
-
-        // 4. Update OWC State
-        if (forceUpdate && window.updateOWC) {
-            window.updateOWC();
-        }
-
-        // 5. Visual Feedback
-        if (forceUpdate) {
-            const btn = document.querySelector('button[onclick="window.syncOWCWeather(true)"]');
-            if (btn) {
-                const originalText = btn.textContent;
-                btn.textContent = "SYNCED";
-                btn.classList.add('bg-green-600', 'text-white');
-                setTimeout(() => {
-                    btn.textContent = originalText;
-                    btn.classList.remove('bg-green-600', 'text-white');
-                }, 1000);
-            }
-        }
-    };
 
     if (openIntelBtn) {
         openIntelBtn.onclick = openIntelHub;
@@ -3087,16 +3054,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const ACTIVE_PROFILE_KEY = 'rangeCardActiveProfile';
 
     window.WeaponProfiles = {
-        getAll: function () {
+        getAll: async function () {
             try {
-                return JSON.parse(localStorage.getItem(WEAPON_PROFILES_KEY)) || [];
+                const results = await window.TRC_IDB.getAll('weaponProfiles');
+                return Object.values(results) || [];
             } catch (e) {
                 return [];
             }
         },
 
-        save: function (profile) {
-            const profiles = this.getAll();
+        save: async function (profile) {
+            const profiles = await this.getAll();
             const existingIndex = profiles.findIndex(p => p.id === profile.id);
 
             if (existingIndex >= 0) {
@@ -3106,21 +3074,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 profiles.push(profile);
             }
 
-            localStorage.setItem(WEAPON_PROFILES_KEY, JSON.stringify(profiles));
-            this.refreshUI();
+            await window.TRC_IDB.set('weaponProfiles', profile.id.toString(), profile);
+            await this.refreshUI();
             return profile;
         },
 
-        delete: function (profileId) {
-            const profiles = this.getAll().filter(p => p.id !== profileId);
-            localStorage.setItem(WEAPON_PROFILES_KEY, JSON.stringify(profiles));
-            this.refreshUI();
+        delete: async function (profileId) {
+            await window.TRC_IDB.delete('weaponProfiles', profileId.toString());
+            await this.refreshUI();
         },
 
-        load: function (profileId) {
+        load: async function (profileId) {
             // Ensure search works regardless of string or number input
             const searchId = typeof profileId === 'string' ? parseInt(profileId) : profileId;
-            const profiles = this.getAll();
+            const profiles = await this.getAll();
             const profile = profiles.find(p => p.id === searchId);
 
             if (!profile) {
@@ -3168,7 +3135,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return val ? parseInt(val) : null;
         },
 
-        createFromCurrent: function (name) {
+        createFromCurrent: async function (name) {
             const profile = {
                 name: name || 'Unnamed Profile',
                 weaponName: document.getElementById('header-notes')?.value || '',
@@ -3182,12 +3149,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 createdAt: new Date().toISOString()
             };
 
-            return this.save(profile);
+            return await this.save(profile);
         },
 
-        refreshUI: function () {
+        refreshUI: async function () {
             const listContainer = document.getElementById('weapon-profiles-list');
-            const profiles = this.getAll();
+            const profiles = await this.getAll();
             const activeId = this.getActive();
 
             function populateWeaponProfileDropdowns(profiles, activeId) {
@@ -3229,10 +3196,10 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.saveCurrentAsWeaponProfile = function () {
+    window.saveCurrentAsWeaponProfile = async function () {
         const name = prompt('Enter a name for this weapon profile:');
         if (name && name.trim()) {
-            const profile = WeaponProfiles.createFromCurrent(name.trim());
+            const profile = await WeaponProfiles.createFromCurrent(name.trim());
             addChatBubble('bot', ` Saved weapon profile: "${profile.name}"`);
         }
     };
@@ -3776,12 +3743,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     'owc-hum': weather.humidity,
                     'owc-press': weather.pressure,
                     'owc-alt': weather.msl, // Sync topo elevation to ALT input
-                    // 'owc-wind-speed': weather.windSpd, // Disabled to preserve manual wind
-                    // 'owc-wind-dir': weather.windDir,   // Disabled to preserve manual wind
+                    'owc-wind-speed': weather.windSpd,
+                    'owc-wind-dir': weather.windDir,
                     'temperature': weather.temp,
                     'humidity': weather.humidity,
                     'pressure': weather.pressure,
-                    'wind-speed': weather.windSpd
+                    'wind-speed': weather.windSpd,
+                    'wind-dir': weather.windDir
                 };
 
                 Object.entries(controls).forEach(([id, val]) => {
@@ -4184,9 +4152,10 @@ window.switchIntelTab = function (tabName) {
                 if (typeof window.initTacticalCompass === 'function') window.initTacticalCompass();
             }, 100);
         } else if (tabName === 'tactical-map') {
+            // Map logic is now robust (v4.9). Small delay for CSS visibility.
             setTimeout(() => {
                 if (typeof window.initTacticalMap === 'function') window.initTacticalMap();
-            }, 800);
+            }, 100);
         } else if (tabName === 'gps-rangefinder') {
             setTimeout(() => {
                 if (typeof window.initGPSRangefinder === 'function') window.initGPSRangefinder();
@@ -4223,6 +4192,8 @@ window.switchIntelTab = function (tabName) {
         console.error("[FATAL] switchIntelTab failed:", err);
     }
 };
+
+console.log(">> [SCRIPT_JS] FULL LOAD COMPLETE <<");
 
 // --- SCOPE CAM HUD LOGIC ---
 window.scopeCamStream = null;
@@ -5306,6 +5277,20 @@ document.addEventListener('DOMContentLoaded', () => {
 window.owcLiveSync = true; // Default to Live Mission Sync
 window.owcAtmosMode = 'da'; // 'da' or 'alt'
 
+window.toggleOWCUnits = function () {
+    window.owcUnitMode = window.owcUnitMode === 'MIL' ? 'MOA' : 'MIL';
+    const btn = document.getElementById('owc-unit-toggle-btn');
+    if (btn) btn.textContent = `MODE: ${window.owcUnitMode}`;
+
+    // Update labels in OWC
+    const elevUnitLabel = document.querySelector('#owc-elev-mils')?.parentElement?.nextElementSibling?.querySelector('span'); // This might be brittle, let's be more specific
+    // Actually, I'll update find the labels by text content if possible or just update IDs if I can.
+    // Better: Update the textContent of the labels in updateOWC.
+
+    window.updateOWC();
+    window.generateQuickDope(); // [USER REQUEST] Also refresh the DOPE table
+};
+
 window.updateOWC = function () {
     try {
         const range = parseFloat(document.getElementById('owc-range')?.value) || 0;
@@ -5319,32 +5304,24 @@ window.updateOWC = function () {
         const angle = parseFloat(document.getElementById('owc-angle')?.value) || 0;
 
         // --- 0. PRE-CALC ENVIRONMENT (Independent of Range) ---
-        // 1. Gather Unified Weather Context (Specialized for OWC inputs)
         const daElement = document.getElementById('owc-da');
         let daVal = daElement?.value;
 
-        // If in ALT mode, calculate a virtual DA based on Alt + Temp + Hum + Press (Altimeter)
         if (window.owcAtmosMode === 'alt') {
             const alt = parseFloat(document.getElementById('owc-alt')?.value || 0);
             const temp = parseFloat(document.getElementById('owc-temp')?.value || 59);
             const hum = parseFloat(document.getElementById('owc-hum')?.value || 50);
             const press = parseFloat(document.getElementById('owc-press')?.value || 29.92);
-
-            // Use isStationPressure = FALSE (Treat input as Altimeter/QNH)
             daVal = window.calculateDA(alt, temp, hum, press, false);
-
-            // Update UI display for DA in Alt mode
             const daDisp = document.getElementById('owc-calc-da-display');
             if (daDisp) daDisp.textContent = `${daVal} FT`;
         }
 
-        // UI Feedback: Wind Compass
         const compass = document.getElementById('owc-wind-compass');
         if (compass) compass.style.transform = `rotate(${windDir}deg)`;
 
         if (range <= 0) {
             window.resetOWCResults();
-            // Ensure DA display remains even if results are reset
             if (window.owcAtmosMode === 'alt' && daVal) {
                 const daDisp = document.getElementById('owc-calc-da-display');
                 if (daDisp) daDisp.textContent = `${daVal} FT`;
@@ -5357,13 +5334,11 @@ window.updateOWC = function () {
             pressure: parseFloat(document.getElementById('owc-press')?.value) || 29.92,
             humidity: parseFloat(document.getElementById('owc-hum')?.value) || 50,
             windSpeed: windSpeed,
-            windAngle: (windDir - losHeading + 360) % 360, // Relative Wind
+            windAngle: (windDir - losHeading + 360) % 360,
             da: (daVal !== "" && daVal !== undefined) ? parseFloat(daVal) : null
         };
 
         const profile = { velocity: mv, zero, bc, scopeHeight: 1.75 };
-
-        // 2. Execute Unified Math
         const result = window.BallisticEngine.calculate(profile, weather, range, angle);
 
         // 3. Update Relative Wind Status
@@ -5384,10 +5359,14 @@ window.updateOWC = function () {
             if (el) el.textContent = val;
         };
 
-        const elevVal = parseFloat(result.elevMil);
+        const isMIL = window.owcUnitMode === 'MIL';
+        const elevVal = isMIL ? parseFloat(result.elevMil) : parseFloat(result.elevMOA);
         updateText('owc-elev-mils', Math.abs(elevVal).toFixed(1));
         updateText('owc-elev-inches', `${Math.abs(parseFloat(result.dropInches))}"`);
-        updateText('owc-elev-clicks', `${Math.abs(Math.round(elevVal * 10))} CLICKS`);
+
+        // Update Click Label (Assuming 1/10 Mil or 1/4 MOA)
+        const clicks = isMIL ? Math.abs(Math.round(elevVal * 10)) : Math.abs(Math.round(elevVal * 4));
+        updateText('owc-elev-clicks', `${clicks} CLICKS`);
 
         const elevDirEl = document.getElementById('owc-elev-dir');
         if (elevDirEl) {
@@ -5395,7 +5374,18 @@ window.updateOWC = function () {
             elevDirEl.className = `text-xl font-black ${elevVal >= 0 ? 'text-blue-200' : 'text-orange-400'} opacity-80`;
         }
 
-        updateText('owc-wind-mils', result.windMil);
+        const windVal = isMIL ? result.windMil : result.windMOA;
+        updateText('owc-wind-mils', windVal);
+
+        // Update Wind Clicks (Assuming 1/10 Mil or 1/4 MOA)
+        const wClicks = isMIL ? Math.abs(Math.round(parseFloat(result.windMil) * 10)) : Math.abs(Math.round(parseFloat(result.windMOA) * 4));
+        updateText('owc-wind-clicks', `${wClicks} CLICKS`);
+
+        // Update Unit Labels in the UI
+        const milLabels = document.querySelectorAll('.owc-unit-label');
+        milLabels.forEach(label => {
+            label.textContent = window.owcUnitMode + (window.owcUnitMode === 'MIL' ? 'S' : '');
+        });
 
         // Feedback Pulse on answer box
         const answerBox = document.getElementById('owc-elev-mils')?.parentElement;
@@ -5526,33 +5516,7 @@ window.toggleOWCAtmosMode = function () {
     }
     window.updateOWC();
 };
-
-window.calculateDA = function (alt, tempF, hum, pressInHg, isStationPressure = true) {
-    // 1. Convert Inputs
-    const tempC = (tempF - 32) * 5 / 9;
-    const tempK = tempC + 273.15;
-    let stationP = pressInHg; // inHg
-
-    // 2. Handle Station vs Altimeter
-    if (!isStationPressure) {
-        // approx conversion
-        stationP = pressInHg * Math.pow((288.15 - 0.0019812 * alt) / 288.15, 5.256);
-    }
-
-    // 3. Vapor Pressure (Tetens)
-    const es = 6.112 * Math.exp(17.67 * tempC / (tempC + 243.5));
-    const e = (hum / 100) * es; // hPa
-
-    // 4. Virtual Temp
-    const p_hpa = stationP * 33.8639;
-    const tv = tempK / (1 - (e / p_hpa) * (1 - 0.622));
-
-    // 5. Density Altitude (NWS / Shelquist)
-    // DA = 145442.16 * [1 - (P_stat/P_std / Tv/T_std)^0.235]
-    const da = 145442.16 * (1 - Math.pow((p_hpa / 1013.25) / (tv / 288.15), 0.235));
-
-    return Math.round(da) || 0;
-};
+// (calculateDA consolidated to global utility at line 6615)
 
 window.syncOWCWeather = function (force = false) {
     const daInp = document.getElementById('owc-da');
@@ -5565,10 +5529,15 @@ window.syncOWCWeather = function (force = false) {
     const temp = parseFloat(document.getElementById('temperature')?.value) || 59;
     const hum = parseFloat(document.getElementById('humidity')?.value) || 50;
     const press = parseFloat(document.getElementById('pressure')?.value) || 29.92;
+    const alt = parseFloat(document.getElementById('owc-alt')?.value) || 0;
 
-    // Use high-fidelity formula
-    const calculatedDA = window.calculateDA(0, temp, hum, press);
+    // Use high-fidelity formula (use false for isStationPressure to treat HUD input as Altimeter/QNH)
+    const calculatedDA = window.calculateDA ? window.calculateDA(alt, temp, hum, press, false) : 0;
     daInp.value = calculatedDA;
+
+    // Update display if exists
+    const disp = document.getElementById('owc-calc-da-display');
+    if (disp) disp.textContent = calculatedDA;
 
     // Also push to OWC widgets if they exist (Bi-directional visual sync)
     const syncMap = {
@@ -5595,7 +5564,7 @@ window.syncOWCWeather = function (force = false) {
     });
 
     // Unified call for efficiency
-    window.updateOWC();
+    if (window.updateOWC) window.updateOWC();
 
     // LOG SYNC ACTION
     if (typeof SessionLogger !== 'undefined' && force) {
@@ -5604,6 +5573,20 @@ window.syncOWCWeather = function (force = false) {
 
     daInp.classList.add('text-neon-green');
     setTimeout(() => daInp.classList.remove('text-neon-green'), 1000);
+
+    // Visual Feedback for the Sync Button
+    if (force) {
+        const btn = document.querySelector('button[onclick="window.syncOWCWeather(true)"]');
+        if (btn) {
+            const originalText = btn.textContent;
+            btn.textContent = "SYNCED";
+            btn.classList.add('bg-emerald-600', 'text-white');
+            setTimeout(() => {
+                btn.textContent = originalText;
+                btn.classList.remove('bg-emerald-600', 'text-white');
+            }, 1000);
+        }
+    }
 };
 
 window.toggleOWCLiveSync = function () {
@@ -6242,9 +6225,12 @@ window.BallisticEngine = {
         const spinDriftMils = (0.000015 * Math.pow(range, 1.3));
         const spinDriftInches = spinDriftMils * (range * 36 / 1000);
 
-        // 5. Mils Conversion
-        const inchesPerMil = (range * 36) / 1000;
+        // 6. Mils & MOA Conversion
+        const inchesPerMil = (range === 0) ? 0.036 : (range * 36) / 1000;
+        const inchesPerMOA = (range === 0) ? 1.047 : (range / 100) * 1.04719;
+
         let elevMil = (range === 0) ? 0 : drop_path / inchesPerMil;
+        let elevMOA = (range === 0) ? 0 : drop_path / inchesPerMOA;
 
         // --- SLOPE CORRECTION (Cosine Rule) ---
         const slope = inclination || weather.inclination || 0;
@@ -6252,25 +6238,29 @@ window.BallisticEngine = {
             const radSlope = (slope * Math.PI) / 180;
             const cosSlope = Math.cos(radSlope);
             elevMil *= cosSlope;
+            elevMOA *= cosSlope;
             drop_path *= cosSlope; // Update inches too
         }
 
-        // 6. Windage (Didion Lag + Spin)
+        // 7. Windage (Didion Lag + Spin)
         const t_vac = rangeFt / mv;
         const lag = t - t_vac;
         const driftInches = (Math.abs(crossWind) * 17.6) * lag; // Magnitude
 
         // Final Windage (Windage magnitude + Spin vector)
-        // Note: Spin Drift is usually to the right for right-hand twist (positive mil)
         let totalWindInches = driftInches + spinDriftInches;
         let windMil = (range === 0) ? 0 : totalWindInches / inchesPerMil;
+        let windMOA = (range === 0) ? 0 : totalWindInches / inchesPerMOA;
 
         return {
             range,
             velocity: Math.round(v_r),
             elevMil: elevMil.toFixed(1),
+            elevMOA: elevMOA.toFixed(1),
             windMil: Math.abs(windMil).toFixed(1),
+            windMOA: Math.abs(windMOA).toFixed(1),
             windMilSigned: windMil,
+            windMOASigned: windMOA,
             time: t.toFixed(2),
             dropInches: drop_path.toFixed(1),
             windInches: totalWindInches.toFixed(1),
@@ -6671,17 +6661,7 @@ window.generateQuickDope = function () {
 
         // 3. Render
         if (typeof window.renderDropTable === 'function') {
-            // Pass specific header data to override defaults
-            const headerData = {
-                source: context.sourceName,
-                windSpeed: context.weather.windSpeed,
-                windDir: context.weather.windAngle, // This is already relative/absolute processed? No, getTacticalContext returns raw input usually.
-                // Let's grab Raw inputs for the header to be safe, or use the context values
-                rawWindDir: document.getElementById('owc-wind-dir')?.value || 270,
-                los: document.getElementById('owc-los-heading')?.value || 0
-            };
-
-            window.renderDropTable(data, headerData);
+            window.renderDropTable(data, context);
             localStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
@@ -6705,19 +6685,29 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
     const titleEl = document.getElementById('dope-table-title');
     if (!container) return;
 
-    // Handle legacy string argument or new object argument
+    // Handle metadata object or legacy title string
     let sourceTitle = "QUICK DOPE";
-    let wSpeed = document.getElementById('owc-wind-speed')?.value || document.getElementById('wind-speed')?.value || 0;
-    let wDir = document.getElementById('owc-wind-dir')?.value || document.getElementById('wind-dir')?.value || 270;
-    let losVal = document.getElementById('owc-los-heading')?.value || 0;
+    let rifle = "SYSTEM-1";
+    let caliber = "308 WIN";
+    let wSpeed = 0;
+    let wDir = 270;
+    let losVal = 0;
+    const unitMode = window.owcUnitMode || "MIL";
 
-    if (typeof headerData === 'object') {
-        sourceTitle = headerData.source || "QUICK DOPE";
-        wSpeed = headerData.windSpeed !== undefined ? headerData.windSpeed : wSpeed;
-        wDir = headerData.rawWindDir !== undefined ? headerData.rawWindDir : wDir;
-        losVal = headerData.los !== undefined ? headerData.los : losVal;
+    if (typeof headerData === 'object' && headerData !== null) {
+        sourceTitle = headerData.sourceName || headerData.source || "QUICK DOPE";
+        wSpeed = headerData.windSpeed !== undefined ? headerData.windSpeed : (headerData.weather?.windSpeed || 0);
+        wDir = headerData.rawWindDir !== undefined ? headerData.rawWindDir : (headerData.weather?.windAngle || 270);
+        losVal = headerData.los !== undefined ? headerData.los : (headerData.weather?.inclination || 0);
+        rifle = headerData.profile?.rifle || headerData.rifle || "SYSTEM-1";
+        caliber = headerData.profile?.caliber || headerData.caliber || "308 WIN";
     } else {
-        sourceTitle = headerData;
+        sourceTitle = headerData || "QUICK DOPE";
+        wSpeed = document.getElementById('owc-wind-speed')?.value || 0;
+        wDir = document.getElementById('owc-wind-dir')?.value || 270;
+        losVal = document.getElementById('owc-angle')?.value || 0;
+        rifle = document.getElementById('owc-rifle-input')?.value || "SYSTEM-1";
+        caliber = document.getElementById('owc-ammo-input')?.value || "308 WIN";
     }
 
     // Apply Title + Wind Meta
@@ -6725,15 +6715,31 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
         titleEl.innerHTML = `
             <div class="flex flex-col items-center gap-1 w-full pb-4 bg-slate-200 rounded-t-xl border-b border-black/10">
                 <h2 id="dope-capture-name" class="text-3xl font-black text-black italic tracking-tighter uppercase mb-2">DOPE CHART</h2>
-                <div class="flex gap-3 flex-wrap justify-center">
-                    <div class="px-4 py-1.5 bg-black/5 border border-black/10 rounded flex items-center gap-2">
-                        <span class="text-[10px] text-zinc-600 font-black uppercase tracking-widest">SOURCE:</span>
-                        <span class="text-[11px] text-blue-700 font-black uppercase tracking-widest">${sourceTitle}</span>
+                <div class="flex flex-col items-center gap-2">
+                    <div class="flex gap-2 flex-wrap justify-center">
+                        <div class="px-3 py-1 bg-black/5 border border-black/10 rounded flex items-center gap-2">
+                            <span class="text-[9px] text-zinc-600 font-black uppercase tracking-widest">RIFLE:</span>
+                            <span class="text-[10px] text-blue-700 font-black uppercase tracking-widest">${rifle}</span>
+                        </div>
+                        <div class="px-3 py-1 bg-black/5 border border-black/10 rounded flex items-center gap-2">
+                            <span class="text-[9px] text-zinc-600 font-black uppercase tracking-widest">CAL:</span>
+                            <span class="text-[10px] text-emerald-700 font-black uppercase tracking-widest">${caliber}</span>
+                        </div>
+                        <div class="px-3 py-1 bg-blue-600/10 border border-blue-500/20 rounded flex items-center gap-2">
+                            <span class="text-[9px] text-blue-700 font-black uppercase tracking-widest">UNITS:</span>
+                            <span class="text-[10px] text-blue-800 font-black uppercase tracking-widest">${unitMode}</span>
+                        </div>
                     </div>
-                    <div class="px-4 py-1.5 bg-black/5 border border-black/10 rounded flex gap-6 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                        <span>WIND: <b class="text-orange-700 font-black">${wDir}°</b></span>
-                        <span>SPD: <b class="text-orange-700 font-black">${wSpeed} MPH</b></span>
-                        <span>LOS: <b class="text-blue-700 font-black">${losVal}°</b></span>
+                    <div class="flex gap-2 flex-wrap justify-center">
+                        <div class="px-4 py-1.5 bg-black/5 border border-black/10 rounded flex gap-4 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
+                            <span>WIND: <b class="text-orange-700 font-black">${wDir}°</b></span>
+                            <span>SPD: <b class="text-orange-700 font-black">${wSpeed} MPH</b></span>
+                            <span>LOS: <b class="text-blue-700 font-black">${losVal}°</b></span>
+                        </div>
+                        <div class="px-4 py-1.5 bg-zinc-800/10 border border-black/10 rounded flex items-center gap-2">
+                             <span class="text-[9px] text-zinc-600 font-black uppercase tracking-widest">SOURCE:</span>
+                             <span class="text-[10px] text-zinc-800 font-black uppercase tracking-widest">${sourceTitle}</span>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -6758,20 +6764,21 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
                 <thead>
                     <tr class="bg-slate-300 text-[12px] text-black uppercase tracking-[0.2em] font-black">
                         <th class="p-4 border-b border-black/10 text-center">RNG</th>
-                        <th class="p-4 border-b border-black/10 text-black text-center">ELEV (MIL)</th>
-                        <th class="p-4 border-b border-black/10 text-orange-900 text-center">WIND</th>
+                        <th class="p-4 border-b border-black/10 text-black text-center">ELEV (${window.owcUnitMode})</th>
+                        <th class="p-4 border-b border-black/10 text-orange-900 text-center">WIND (${window.owcUnitMode})</th>
                     </tr>
                 </thead>
                 <tbody class="text-base font-mono text-black">
         `;
 
         colData.forEach(row => {
-            const eVal = parseFloat(row.elevMil);
+            const isMIL = window.owcUnitMode === 'MIL';
+            const eVal = isMIL ? parseFloat(row.elevMil) : parseFloat(row.elevMOA);
             const eDir = eVal >= 0 ? 'U' : 'D';
-            const wVal = parseFloat(row.windMil);
+            const wVal = isMIL ? parseFloat(row.windMil) : parseFloat(row.windMOA);
             const wDir = row.crossWind < 0 ? 'L' : 'R';
-            const dropIn = row.dropInches || (eVal * row.range * 0.036).toFixed(1);
-            const driftIn = row.windInches || (wVal * row.range * 0.036).toFixed(1);
+            const dropIn = row.dropInches || (parseFloat(row.elevMil) * row.range * 0.036).toFixed(1);
+            const driftIn = row.windInches || (parseFloat(row.windMil) * row.range * 0.036).toFixed(1);
 
             html += `
             <tr class="border-b border-black/5 hover:bg-black/5 transition-colors">
@@ -7042,177 +7049,20 @@ window.syncCompassToOWC = function () {
 };
 
 // --- TACTICAL MAP HUB LOGIC ---
-window.initTacticalMap = function (forceReinit = false) {
-    console.log("Tactical Map is currently disabled.");
-    return;
-    const mapContainer = document.getElementById('tactical-map-container');
-    if (!mapContainer) return;
-
-    // PRESERVE STATE: If we are re-initializing, save the current positions
-    let savedShooterPos = null;
-    let savedTargetPos = null;
-
-    if (window.tacticalMap && window.mapShooterMarker && window.mapTargetMarker) {
-        savedShooterPos = window.mapShooterMarker.getLatLng();
-        savedTargetPos = window.mapTargetMarker.getLatLng();
-    }
-
-    if (window.tacticalMap && !forceReinit) {
-        console.log("[MAP] Validating existing map...");
-        window.tacticalMap.invalidateSize();
-        if (window.mapShooterMarker) {
-            window.tacticalMap.panTo(window.mapShooterMarker.getLatLng());
-        }
-        return;
-    }
-
-    if (forceReinit && window.tacticalMap) {
-        console.log("[MAP] Nuking existing map for Hard Reset...");
-        window.tacticalMap.remove();
-        window.tacticalMap = null;
-        mapContainer.innerHTML = '';
-    }
-
-    // LOOP PROTECTION: Removed ResizeObserver causing layout thrashing
-    console.log("[MAP] Initializing Tactical Map Engine...");
-    const defaultPos = [34.0522, -118.2437]; // LA
-
-    // USE PRESERVED POSITIONS if available, otherwise use default
-    const shooterPos = savedShooterPos || defaultPos;
-    // For target, if we have a saved pos use it. If not, offset from shooter.
-    const targetPos = savedTargetPos || [shooterPos[0] + 0.001, shooterPos[1] + 0.001];
-
-    // Create map instance on window for persistence
-    window.tacticalMap = L.map('tactical-map-container', {
-        zoomControl: true,
-        maxZoom: 19,
-        scrollWheelZoom: true,
-        fadeAnimation: true
-    }).setView(shooterPos, 16);
-
-    // Primary Esri Satellite Layer (Restore "Old" Map)
-    L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Esri, Maxar, Earthstar Geographics',
-        maxZoom: 19
-    }).addTo(window.tacticalMap);
-
-    // Set up markers on window
-    const shooterIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div class="w-6 h-6 bg-blue-600 border-2 border-white rounded-full shadow-lg flex items-center justify-center"><div class="w-1 h-1 bg-white rounded-full"></div></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-    });
-
-    const targetIcon = L.divIcon({
-        className: 'custom-div-icon',
-        html: `<div class="w-6 h-6 bg-red-600 border-2 border-white rounded-full shadow-lg flex items-center justify-center"><div class="w-2 h-[2px] bg-white"></div><div class="h-2 w-[2px] bg-white absolute"></div></div>`,
-        iconSize: [24, 24],
-        iconAnchor: [12, 12]
-    });
-
-    window.mapShooterMarker = L.marker(shooterPos, { draggable: true, icon: shooterIcon }).addTo(window.tacticalMap);
-    window.mapTargetMarker = L.marker(targetPos, { draggable: true, icon: targetIcon }).addTo(window.tacticalMap);
-
-    // Track if user moved markers
-    // CHECK SAVED STATE:
-    if (savedShooterPos) {
-        window.mapMarkersDragged = true;
-        window.mapHasInitialized = true;
-        console.log("[MAP] Restored user marker positions. GPS override blocked.");
-    } else {
-        window.mapMarkersDragged = false;
-    }
-
-    window.mapPolyline = L.polyline([window.mapShooterMarker.getLatLng(), window.mapTargetMarker.getLatLng()], { color: '#000000', weight: 3, dashArray: '5, 10' }).addTo(window.tacticalMap);
-
-    const updateMapDist = () => {
-        if (!window.mapShooterMarker || !window.mapTargetMarker) return;
-        const p1 = window.mapShooterMarker.getLatLng();
-        const p2 = window.mapTargetMarker.getLatLng();
-        window.mapPolyline.setLatLngs([p1, p2]);
-
-        const meters = p1.distanceTo(p2);
-        const yards = Math.round(meters * 1.09361);
-
-        const el = document.getElementById('map-dist-val');
-        if (el) el.innerHTML = `${yards} <span class="text-xs text-blue-500">YDS</span>`;
-    };
-
-    window.mapShooterMarker.on('dragstart', () => { window.mapMarkersDragged = true; });
-    window.mapTargetMarker.on('dragstart', () => { window.mapMarkersDragged = true; });
-    window.mapShooterMarker.on('drag', updateMapDist);
-    window.mapTargetMarker.on('drag', updateMapDist);
-
-    if (navigator.geolocation && !window.mapHasInitialized) {
-        navigator.geolocation.getCurrentPosition(pos => {
-            if (window.tacticalMap && !window.mapHasInitialized) {
-                // PROTECTION: Only jump to GPS if the user hasn't started drag/drop yet
-                if (!window.mapMarkersDragged) {
-                    console.log("[MAP] Setting initial mission position via GPS...");
-                    const userLatLng = [pos.coords.latitude, pos.coords.longitude];
-                    window.tacticalMap.setView(userLatLng, 17);
-                    window.mapShooterMarker.setLatLng(userLatLng);
-                    window.mapTargetMarker.setLatLng([userLatLng[0] + 0.0005, userLatLng[1] + 0.0005]);
-                    updateMapDist();
-                    window.mapHasInitialized = true;
-                }
-
-                // CRITICAL: Force re-draw after the 'Location Required' pop-up closes
-                setTimeout(() => { if (window.tacticalMapHardReset) window.tacticalMapHardReset(); }, 600);
-            }
-        }, (err) => {
-            console.warn("[MAP] GPS initialization failed:", err.message);
-        }, { enableHighAccuracy: true });
-    }
-
-    updateMapDist();
-
-    // STABILITY PASS
-    setTimeout(() => { if (window.tacticalMapHardReset) window.tacticalMapHardReset(); }, 1200);
-};
-
-// Tactical Map Hard Reset (Fixes Shrivel/Alignment)
-window.tacticalMapHardReset = function () {
-    if (!window.tacticalMap) return;
-    console.log("[MAP] Performing High-Power Reset...");
-    const container = document.getElementById('tactical-map-container');
-    if (container) {
-        // Step 1: Force absolute dimensions
-        container.style.width = '100%';
-        container.style.display = 'block';
-
-        // Step 2: Invalidate with high specificity
-        window.tacticalMap.invalidateSize({ animate: true });
-
-        // Step 3: Check if still shrunken. If so, Nuke & Re-init.
-        setTimeout(() => {
-            const mapDiv = container.querySelector('.leaflet-container');
-            if (mapDiv && mapDiv.offsetWidth < container.offsetWidth * 0.5) {
-                console.warn("[MAP] detected rendering halt. Nuking instance...");
-                window.initTacticalMap(true); // forceReinit
-            } else {
-                if (window.mapShooterMarker) {
-                    window.tacticalMap.panTo(window.mapShooterMarker.getLatLng());
-                }
-            }
-        }, 500);
-    }
-};
+// [DEPRECATED] Entire block removed to defer exclusively to map_logic.js
+// map_logic.js is loaded after this file and manages all tactical map behaviors.
 
 window.syncMapRange = function () {
-    const distText = document.getElementById('map-dist-val')?.textContent || "0";
-    const yards = parseInt(distText);
-
-    if (yards > 0) {
-        const rangeInput = document.getElementById('owc-range');
-        if (rangeInput) {
-            rangeInput.value = yards;
-            if (typeof window.updateOWC === 'function') window.updateOWC();
-            alert(`MAP RANGE SYNCED: ${yards} YDS`);
-        }
+    if (typeof window.map_logic_sync === 'function') {
+        window.map_logic_sync();
+    } else if (typeof window.syncMapRange === 'function' && window.syncMapRange.name !== 'syncMapRange') {
+        // This is a safety catch for the map_logic.js version
+        window.syncMapRange();
     }
+    // Note: The actual button in HTML calls window.syncMapRange() 
+    // which is defined in map_logic.js and will overwrite this one.
 };
+
 
 // --- GPS RANGEFINDER LOGIC ---
 let gpsTargetCoords = null;
@@ -8274,7 +8124,7 @@ function renderVault(targets) {
             `;
         }).join('');
 
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         console.log("[VAULT] Render complete");
     } catch (err) {
         console.error("[VAULT] Render failed:", err);
@@ -8420,7 +8270,7 @@ window.openTargetDetail = async function (targetId) {
             setupMeasurementCanvas();
         };
 
-        lucide.createIcons();
+        if (typeof lucide !== 'undefined') lucide.createIcons();
         console.log("[TARGET DETAIL] Opened target:", targetId);
     };
 };
@@ -8897,70 +8747,6 @@ window.switchTacticalModule = function (moduleId) {
     }
 };
 
-// === INTEL HUB NAVIGATION CHECK ===
-// Ensures switchIntelTab exists and refreshes map when opened
-(function () {
-    // 1. Capture original function if it exists
-    const originalSwitch = window.switchIntelTab;
-
-    // 2. Define/Override with Wrapper
-    window.switchIntelTab = function (tabId) {
-
-        // --- 2a. Run Original Logic ---
-        if (typeof originalSwitch === 'function') {
-            originalSwitch(tabId);
-        } else {
-            // --- 2b. Fallback Logic (if original missing) ---
-            console.warn("Original switchIntelTab not found. Using fallback.");
-
-            // Hide all 'intel-' content
-            const contentDivs = document.querySelectorAll('[id^="intel-"]');
-            contentDivs.forEach(div => div.classList.add('hidden'));
-
-            // Reset all 'tab-' buttons in the nav container
-            // The nav container is likely the parent of the clicked button
-            const tabBtn = document.getElementById(`tab-${tabId}`);
-            if (tabBtn) {
-                const siblings = tabBtn.parentElement.querySelectorAll('button');
-                siblings.forEach(btn => {
-                    btn.classList.remove('text-[var(--input-text)]', 'border-blue-500');
-                    btn.classList.add('text-gray-500', 'border-transparent');
-                });
-                // Activate clicked button
-                tabBtn.classList.remove('text-gray-500', 'border-transparent');
-                tabBtn.classList.add('text-[var(--input-text)]', 'border-blue-500');
-            }
-
-            // Show target content
-            const targetContent = document.getElementById(`intel-${tabId}`);
-            if (targetContent) targetContent.classList.remove('hidden');
-        }
-
-        // --- 3. Tactical Map Specific Logic ---
-        if (tabId === 'tactical-map') {
-            console.log("Tactical Map Tab Check...");
-            // Force resize after transition
-            setTimeout(() => {
-                if (typeof window.refreshMapSize === 'function') {
-                    window.refreshMapSize();
-                }
-                // Also init if not already
-                if (typeof window.initSatelliteMap === 'function') {
-                    window.initSatelliteMap();
-                }
-            }, 100);
-        }
-
-        // --- 4. Log Action ---
-        if (typeof SessionLogger !== 'undefined') {
-            SessionLogger.add("USER", `Switched Intel Tab: ${tabId}`);
-        }
-    };
-
-    console.log("Intel Hub Navigation Wrapper Installed.");
-})();
-
-
 // --- WORK CENTER PERSISTENCE ---
 window.saveWorkCenterState = function () {
     const state = {
@@ -9100,6 +8886,8 @@ window.getTacticalContext = function (source = 'smart') {
 
     // 2. Gather profile (Priority: Active Batch -> HUD -> Defaults)
     let velocity, zero, bc, scopeHeight = 1.75;
+    let rifle = document.getElementById('owc-rifle-input')?.value || "SYSTEM-1";
+    let caliber = document.getElementById('owc-ammo-input')?.value || "308 WIN";
     let sourceName = "SYSTEM DEFAULT";
 
     // Unified Value Retrieval (Prioritize OWC inputs)
@@ -9115,6 +8903,8 @@ window.getTacticalContext = function (source = 'smart') {
         velocity = batch.mv || batch.speed || hudMv;
         zero = batch.zero || hudZero;
         bc = batch.bc || hudBc;
+        rifle = batch.rifle || rifle;
+        caliber = batch.type || batch.caliber || caliber;
         sourceName = `AMMO: ${batch.name || 'BATCH'}`;
     } else if (source === 'live' || source === 'hud') {
         velocity = hudMv;
@@ -9125,10 +8915,12 @@ window.getTacticalContext = function (source = 'smart') {
         velocity = batch ? (batch.mv || batch.speed) : hudMv;
         zero = batch ? (batch.zero || 100) : hudZero;
         bc = batch ? batch.bc : hudBc;
+        rifle = batch ? (batch.rifle || rifle) : rifle;
+        caliber = batch ? (batch.type || batch.caliber || caliber) : caliber;
         sourceName = batch ? `AUTO: ${batch.name}` : "AUTO: HUD";
     }
 
-    const profile = { velocity, zero, bc, scopeHeight };
+    const profile = { velocity, zero, bc, scopeHeight, rifle, caliber };
 
     return { profile, weather, sourceName };
 };
@@ -9165,8 +8957,8 @@ window.generateQuickDope = function () {
 
         // 3. Render
         if (typeof window.renderDropTable === 'function') {
-            // Pass the full context to render so we have inclination/weather data
-            window.renderDropTable(data, context.sourceName, context.weather);
+            // Pass the full context to render so we have inclination/weather/profile data
+            window.renderDropTable(data, context);
             localStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
@@ -9185,24 +8977,55 @@ window.generateQuickDope = function () {
     }
 };
 
-window.renderDropTable = function (data, sourceTitle = "QUICK DOPE", weatherContext = null) {
+window.renderDropTable = function (data, metadata = "QUICK DOPE", weatherLegacy = null) {
     const container = document.getElementById('dope-render-target');
     const titleEl = document.getElementById('dope-table-title');
     if (!container) return;
 
-    // Get Current Wind for Meta-Header (Fallback if context missing)
-    const wSpeed = weatherContext ? weatherContext.windSpeed : (document.getElementById('owc-wind-speed')?.value || document.getElementById('wind-speed')?.value || 0);
-    const wDir = weatherContext ? weatherContext.windAngle : (document.getElementById('owc-wind-dir')?.value || document.getElementById('wind-dir')?.value || 270);
-    const losVar = weatherContext ? weatherContext.inclination : (document.getElementById('owc-angle')?.value || 0);
+    // Handle metadata object or legacy parameters
+    let sourceTitle = "QUICK DOPE";
+    let rifle = "SYSTEM-1";
+    let caliber = "308 WIN";
+    let wSpeed = 0;
+    let wDir = 270;
+    let losVar = 0;
+    const unitMode = window.owcUnitMode || "MIL";
 
-    // Apply Title + Wind Meta + LOS Upgrade
+    if (typeof metadata === 'object' && metadata !== null) {
+        sourceTitle = metadata.sourceName || metadata.source || "QUICK DOPE";
+        wSpeed = metadata.windSpeed !== undefined ? metadata.windSpeed : (metadata.weather?.windSpeed || 0);
+        wDir = metadata.windAngle !== undefined ? metadata.windAngle : (metadata.weather?.windAngle || 270);
+        losVar = metadata.inclination !== undefined ? metadata.inclination : (metadata.weather?.inclination || 0);
+        rifle = metadata.profile?.rifle || metadata.rifle || "SYSTEM-1";
+        caliber = metadata.profile?.caliber || metadata.caliber || "308 WIN";
+    } else {
+        sourceTitle = metadata || "QUICK DOPE";
+        wSpeed = weatherLegacy ? weatherLegacy.windSpeed : (document.getElementById('owc-wind-speed')?.value || 0);
+        wDir = weatherLegacy ? weatherLegacy.windAngle : (document.getElementById('owc-wind-dir')?.value || 270);
+        losVar = weatherLegacy ? weatherLegacy.inclination : (document.getElementById('owc-angle')?.value || 0);
+        rifle = document.getElementById('owc-rifle-input')?.value || "SYSTEM-1";
+        caliber = document.getElementById('owc-ammo-input')?.value || "308 WIN";
+    }
+
+    // Apply Title + Upgrade Meta
     if (titleEl) {
         titleEl.innerHTML = `
-            <div class="flex flex-col items-center gap-2">
-                <div class="px-3 py-1 bg-blue-500/10 border border-blue-500/20 rounded inline-block">
-                    <span class="text-[8px] text-zinc-500 font-black uppercase tracking-widest mr-2">SOURCE:</span>
-                    <span class="text-[10px] text-blue-400 font-black uppercase tracking-widest">${sourceTitle}</span>
+            <div class="flex flex-col items-center gap-3 w-full">
+                <div class="flex flex-wrap justify-center gap-2">
+                    <div class="px-2 py-0.5 bg-blue-500/10 border border-blue-500/20 rounded flex items-center gap-1">
+                        <span class="text-[7px] text-zinc-500 font-black uppercase tracking-widest">RIFLE:</span>
+                        <span class="text-[9px] text-blue-400 font-black uppercase tracking-widest">${rifle}</span>
+                    </div>
+                    <div class="px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded flex items-center gap-1">
+                        <span class="text-[7px] text-zinc-500 font-black uppercase tracking-widest">CAL:</span>
+                        <span class="text-[9px] text-emerald-400 font-black uppercase tracking-widest">${caliber}</span>
+                    </div>
+                    <div class="px-2 py-0.5 bg-zinc-800 border border-blue-500/30 rounded flex items-center gap-1">
+                        <span class="text-[7px] text-zinc-400 font-black uppercase tracking-widest">UNITS:</span>
+                        <span class="text-[9px] text-blue-300 font-black uppercase tracking-widest">${unitMode}</span>
+                    </div>
                 </div>
+                
                 <div class="flex gap-2">
                     <div class="px-2 py-0.5 bg-orange-500/5 border border-orange-500/10 rounded flex gap-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter shadow-inner">
                         <span>WIND: <b class="text-orange-400 font-black">${wDir}°</b></span>
@@ -9212,6 +9035,11 @@ window.renderDropTable = function (data, sourceTitle = "QUICK DOPE", weatherCont
                          <span>LOS:</span>
                          <span class="text-zinc-200 font-black">${losVar}°</span>
                     </div>
+                </div>
+
+                <div class="px-3 py-1 bg-blue-500/5 border border-blue-500/10 rounded opacity-50">
+                    <span class="text-[7px] text-zinc-500 font-black uppercase tracking-widest mr-2">SOURCE:</span>
+                    <span class="text-[8px] text-blue-400 font-black uppercase tracking-widest">${sourceTitle}</span>
                 </div>
             </div>
         `;
@@ -9224,8 +9052,8 @@ window.renderDropTable = function (data, sourceTitle = "QUICK DOPE", weatherCont
             <thead>
                 <tr class="bg-blue-900/40 text-[8px] text-blue-200 uppercase tracking-[0.2em]">
                     <th class="p-1.5 border-b border-blue-500/20 text-center">RNG</th>
-                    <th class="p-1.5 border-b border-blue-500/20 text-white text-center">ELEV</th>
-                    <th class="p-1.5 border-b border-blue-500/20 text-orange-400 text-center">WIND</th>
+                    <th class="p-1.5 border-b border-blue-500/20 text-white text-center">ELEV (${window.owcUnitMode})</th>
+                    <th class="p-1.5 border-b border-blue-500/20 text-orange-400 text-center">WIND (${window.owcUnitMode})</th>
                     <th class="p-1.5 border-b border-blue-500/20 opacity-50 text-center">VEL</th>
                 </tr>
             </thead>
@@ -9233,12 +9061,13 @@ window.renderDropTable = function (data, sourceTitle = "QUICK DOPE", weatherCont
     `;
 
     data.forEach(row => {
-        const eVal = parseFloat(row.elevMil);
+        const isMIL = window.owcUnitMode === 'MIL';
+        const eVal = isMIL ? parseFloat(row.elevMil) : parseFloat(row.elevMOA);
         const eDir = eVal >= 0 ? 'U' : 'D';
-        const wVal = parseFloat(row.windMil);
+        const wVal = isMIL ? parseFloat(row.windMil) : parseFloat(row.windMOA);
         const wDir = row.crossWind < 0 ? 'L' : 'R';
-        const dropIn = row.dropInches || (eVal * row.range * 0.036).toFixed(1);
-        const driftIn = row.windInches || (wVal * row.range * 0.036).toFixed(1);
+        const dropIn = row.dropInches || (parseFloat(row.elevMil) * row.range * 0.036).toFixed(1);
+        const driftIn = row.windInches || (parseFloat(row.windMil) * row.range * 0.036).toFixed(1);
 
         html += `
         <tr class="border-b border-white/5 hover:bg-white/10 transition-colors">

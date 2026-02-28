@@ -22,12 +22,11 @@
     <script src="html2canvas.min.js"></script>
     <script src="lucide.min.js"></script>
     <!-- Leaflet.js (CDN) -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-    <!-- Esri Leaflet (Satellite) -->
-    <script src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
+    <link rel="stylesheet" href="leaflet.css">
+    <script src="leaflet.js"></script>
+    <script src="idb_helper.js"></script>
+    <!-- Esri Leaflet (Satellite) - Using Defer to prevent blocking fallback -->
+    <script defer src="https://unpkg.com/esri-leaflet@3.0.10/dist/esri-leaflet.js"></script>
     <script>
         console.log('Checking lucide load status...');
         if (typeof lucide === 'undefined') {
@@ -48,7 +47,7 @@
             console.log('Lucide loaded successfully v' + (lucide.version || 'unknown'));
         }
     </script>
-    <link rel="stylesheet" href="style.css?v=3.8">
+    <link rel="stylesheet" href="style.css">
     <style>
         :root {
             /* High Visibility - Brighter Neutral Charcoal */
@@ -290,7 +289,7 @@
 
                 <!-- Profile Manager -->
                 <div class="space-y-4">
-                    <label class="section-label">Data Management</label>
+                    <span class="section-label">Data Management</span>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="openLibraryBtn" type="button"
                             class="flex-1 bg-gray-800 hover:bg-[var(--accent-color)]/10 border border-gray-700 rounded p-2 text-xs font-bold flex items-center justify-center gap-2 transition-all">
@@ -352,12 +351,12 @@
 
                     <!-- Weapon Profiles Section -->
                     <section class="space-y-3 border-t border-neutral-600 pt-4">
-                        <label class="section-label group flex items-center gap-2 cursor-pointer"
+                        <span class="section-label group flex items-center gap-2 cursor-pointer"
                             onclick="document.getElementById('weaponProfilesForm').classList.toggle('hidden')">
                             <i data-lucide="chevron-down" class="w-4 h-4"></i>
                             <i data-lucide="target" class="w-4 h-4 text-emerald-500"></i>
                             Weapon Profiles
-                        </label>
+                        </span>
                         <div id="weaponProfilesForm" class="space-y-3">
                             <!-- Quick Switch Dropdown -->
                             <div class="flex gap-2">
@@ -379,7 +378,7 @@
 
                     <!-- Reload Data Form -->
                     <section class="space-y-4">
-                        <label class="section-label">SESSION INFO</label>
+                        <span class="section-label">SESSION INFO</span>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-2">
                                 <label for="header-notes" class="sr-only">Header Notes</label>
@@ -416,14 +415,21 @@
                             <!-- Mission Data Section (Hidden by default) -->
                             <div id="form-section-mission"
                                 class="col-span-2 pt-2 hidden bg-neutral-800 p-2 rounded border border-blue-900/30">
-                                <label class="section-label text-blue-400">MISSION DATA</label>
+                                <span class="section-label text-blue-400">MISSION DATA</span>
                                 <div class="grid grid-cols-2 gap-2 mt-2">
+                                    <label for="mission-id" class="sr-only">Mission ID</label>
                                     <input type="text" id="mission-id" class="input-field" placeholder="Mission ID">
+                                    <label for="team-id" class="sr-only">Team ID</label>
                                     <input type="text" id="team-id" class="input-field" placeholder="Team ID">
+                                    <label for="sniper-name" class="sr-only">Sniper Name</label>
                                     <input type="text" id="sniper-name" class="input-field" placeholder="Sniper Name">
+                                    <label for="spotter-name" class="sr-only">Spotter Name</label>
                                     <input type="text" id="spotter-name" class="input-field" placeholder="Spotter Name">
+                                    <label for="radio-freq" class="sr-only">Radio Freq</label>
                                     <input type="text" id="radio-freq" class="input-field" placeholder="Radio Freq">
+                                    <label for="callsign" class="sr-only">Callsign</label>
                                     <input type="text" id="callsign" class="input-field" placeholder="Callsign">
+                                    <label for="sector-fire" class="sr-only">Sector of Fire</label>
                                     <textarea id="sector-fire" class="input-field col-span-2 h-16"
                                         placeholder="Sector of Fire / Instructions"></textarea>
                                 </div>
@@ -431,7 +437,7 @@
 
                             <!-- Load Information Section -->
                             <div class="col-span-2 pt-2">
-                                <label class="section-label">RELOAD DATA</label>
+                                <span class="section-label">RELOAD DATA</span>
                             </div>
                             <div class="col-span-1">
                                 <label for="caliber" class="sr-only">Caliber</label>
@@ -486,7 +492,7 @@
                             </div>
                             <!-- Environment Section -->
                             <div class="col-span-2 pt-2">
-                                <label class="section-label">Environment</label>
+                                <span class="section-label">Environment</span>
                             </div>
                             <!-- Structured Weather Inputs -->
                             <div class="col-span-1">
@@ -504,6 +510,10 @@
                             <div class="col-span-1">
                                 <label for="wind-speed" class="sr-only">Wind Speed</label>
                                 <input type="text" id="wind-speed" class="input-field" placeholder="Wind (mph)">
+                            </div>
+                            <div class="col-span-1">
+                                <label for="wind-dir" class="sr-only">Wind Direction</label>
+                                <input type="text" id="wind-dir" class="input-field" placeholder="Wind Dir (°)">
                             </div>
                             <div class="col-span-1">
                                 <label for="cosine" class="sr-only">Cosine Factor</label>
@@ -527,7 +537,7 @@
 
                     <!-- SOLUTION Section -->
                     <section class="space-y-4">
-                        <label class="section-label">SOLUTION</label>
+                        <span class="section-label">SOLUTION</span>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-1">
                                 <label for="elevation" class="sr-only">Elevation</label>
@@ -538,6 +548,7 @@
                                 <input type="text" id="hold-data" class="input-field" placeholder="Hold">
                             </div>
                             <div class="col-span-2 relative flex items-center gap-2">
+                                <label for="final-dope" class="sr-only">Final DOPE</label>
                                 <input type="text" id="final-dope" class="input-field border-neon-green/50 flex-1"
                                     placeholder="Final DOPE">
                                 <button onclick="copyFinalDope(this)"
@@ -551,15 +562,18 @@
 
                     <!-- EQUIPMENT Section -->
                     <section class="space-y-4">
-                        <label class="section-label">EQUIPMENT</label>
+                        <span class="section-label">EQUIPMENT</span>
                         <div class="grid grid-cols-2 gap-4">
                             <div class="col-span-2">
+                                <label for="rifle-notes" class="sr-only">Rifle Notes</label>
                                 <input type="text" id="rifle-notes" class="input-field" placeholder="Rifle/Pistol">
                             </div>
                             <div class="col-span-1">
+                                <label for="scope-notes" class="sr-only">Scope Notes</label>
                                 <input type="text" id="scope-notes" class="input-field" placeholder="Scope Settings">
                             </div>
                             <div class="col-span-1">
+                                <label for="lrf-notes" class="sr-only">LRF Notes</label>
                                 <input type="text" id="lrf-notes" class="input-field" placeholder="LRF Notes">
                             </div>
                         </div>
@@ -567,49 +581,64 @@
 
                     <!-- TARGET DATA Section -->
                     <section class="space-y-4">
-                        <label class="section-label">TARGET DATA</label>
+                        <span class="section-label">TARGET DATA</span>
                         <div class="grid grid-cols-2 gap-4">
-                            <div class="col-span-1"><input type="text" id="targetSize" class="input-field"
-                                    placeholder="Target Size"></div>
-                            <div class="col-span-1"><input type="text" id="groupSize" class="input-field"
-                                    placeholder="Group Size"></div>
-                            <div class="col-span-1"><input type="text" id="wind-notes" class="input-field"
-                                    placeholder="Wind Notes"></div>
-                            <div class="col-span-1"><input type="text" id="direction-notes" class="input-field"
-                                    placeholder="Direction / LOS"></div>
+                            <div class="col-span-1">
+                                <label for="targetSize" class="sr-only">Target Size</label>
+                                <input type="text" id="targetSize" class="input-field" placeholder="Target Size">
+                            </div>
+                            <div class="col-span-1">
+                                <label for="groupSize" class="sr-only">Group Size</label>
+                                <input type="text" id="groupSize" class="input-field" placeholder="Group Size">
+                            </div>
+                            <div class="col-span-1">
+                                <label for="wind-notes" class="sr-only">Wind Notes</label>
+                                <input type="text" id="wind-notes" class="input-field" placeholder="Wind Notes">
+                            </div>
+                            <div class="col-span-1">
+                                <label for="direction-notes" class="sr-only">Direction Notes</label>
+                                <input type="text" id="direction-notes" class="input-field"
+                                    placeholder="Direction / LOS">
+                            </div>
                         </div>
                     </section>
 
                     <!-- 3 SHOTS Section -->
                     <section class="space-y-4">
 
-                        <label class="section-label group flex items-center gap-2">
+                        <span class="section-label group flex items-center gap-2">
                             TARGET LIST
-                        </label>
+                        </span>
                         <div class="space-y-4">
                             <!-- Existing T1-T3 -->
                             <div class="grid grid-cols-[2.5rem_1fr_1fr] items-center gap-2">
                                 <span class="text-[10px] font-bold text-gray-500 uppercase">T1:</span>
+                                <label for="shooting-angle" class="sr-only">T1 Shot Direction</label>
                                 <input type="text" id="shooting-angle" class="input-field"
                                     placeholder="Shot Direction in Degrees">
+                                <label for="compass-range" class="sr-only">T1 Range</label>
                                 <input type="text" id="compass-range" class="input-field" placeholder="Range">
                             </div>
                             <div class="grid grid-cols-[2.5rem_1fr_1fr] items-center gap-2">
                                 <span class="text-[10px] font-bold text-gray-500 uppercase">T2:</span>
+                                <label for="shooting-angle-2" class="sr-only">T2 Shot Direction</label>
                                 <input type="text" id="shooting-angle-2" class="input-field"
                                     placeholder="Shot Direction in Degrees">
+                                <label for="compass-range-2" class="sr-only">T2 Range</label>
                                 <input type="text" id="compass-range-2" class="input-field" placeholder="Range">
                             </div>
                             <div class="grid grid-cols-[2.5rem_1fr_1fr] items-center gap-2">
                                 <span class="text-[10px] font-bold text-gray-500 uppercase">T3:</span>
+                                <label for="shooting-angle-3" class="sr-only">T3 Shot Direction</label>
                                 <input type="text" id="shooting-angle-3" class="input-field"
                                     placeholder="Shot Direction in Degrees">
+                                <label for="compass-range-3" class="sr-only">T3 Range</label>
                                 <input type="text" id="compass-range-3" class="input-field" placeholder="Range">
                             </div>
 
                             <!-- Grade Your Hold Section -->
                             <div class="space-y-4 pt-2">
-                                <label class="section-label">Grade Your Hold</label>
+                                <span class="section-label">Grade Your Hold</span>
 
                                 <div
                                     class="flex flex-col items-center gap-4 bg-neutral-800/40 border border-neutral-600 p-6 rounded-lg">
@@ -678,6 +707,7 @@
                                     </div>
                                 </div>
 
+                                <label for="hold-value" class="sr-only">Hold Notes</label>
                                 <input type="text" id="hold-value" class="input-field" placeholder="Hold Notes">
                                 <!-- Hidden fields for state -->
                                 <input type="hidden" id="hold-grade">
@@ -685,11 +715,11 @@
 
                             <!-- Distance Data Section -->
                             <section class="space-y-4 pt-4 border-t border-gray-800/50">
-                                <label class="section-label group flex items-center gap-2 cursor-pointer"
+                                <span class="section-label group flex items-center gap-2 cursor-pointer"
                                     onclick="document.getElementById('distanceForm').classList.toggle('hidden')">
                                     <i data-lucide="chevron-down" class="w-4 h-4"></i>
                                     Distance Data (100 - 1000)
-                                </label>
+                                </span>
                                 <div id="distanceForm" class="hidden space-y-2">
                                     <div
                                         class="grid grid-cols-3 gap-2 text-[8px] font-bold text-gray-600 uppercase mb-2 px-1">
@@ -699,84 +729,95 @@
                                     </div>
                                     <div class="space-y-1 max-h-60 overflow-y-auto custom-scrollbar pr-2">
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-100" class="input-field py-1 text-center"
-                                                placeholder="100">
-                                            <input type="text" id="clicks-100" class="input-field py-1"
+                                            <label for="dist-100" class="sr-only">Distance 100</label><input type="text"
+                                                id="dist-100" class="input-field py-1 text-center" placeholder="100">
+                                            <label for="clicks-100" class="sr-only">Clicks at 100</label><input
+                                                type="text" id="clicks-100" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-100" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-100" class="sr-only">UDLR at 100</label><input type="text"
+                                                id="udlr-100" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-200" class="input-field py-1 text-center"
-                                                placeholder="200">
-                                            <input type="text" id="clicks-200" class="input-field py-1"
+                                            <label for="dist-200" class="sr-only">Distance 200</label><input type="text"
+                                                id="dist-200" class="input-field py-1 text-center" placeholder="200">
+                                            <label for="clicks-200" class="sr-only">Clicks at 200</label><input
+                                                type="text" id="clicks-200" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-200" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-200" class="sr-only">UDLR at 200</label><input type="text"
+                                                id="udlr-200" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-300" class="input-field py-1 text-center"
-                                                placeholder="300">
-                                            <input type="text" id="clicks-300" class="input-field py-1"
+                                            <label for="dist-300" class="sr-only">Distance 300</label><input type="text"
+                                                id="dist-300" class="input-field py-1 text-center" placeholder="300">
+                                            <label for="clicks-300" class="sr-only">Clicks at 300</label><input
+                                                type="text" id="clicks-300" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-300" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-300" class="sr-only">UDLR at 300</label><input type="text"
+                                                id="udlr-300" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-400" class="input-field py-1 text-center"
-                                                placeholder="400">
-                                            <input type="text" id="clicks-400" class="input-field py-1"
+                                            <label for="dist-400" class="sr-only">Distance 400</label><input type="text"
+                                                id="dist-400" class="input-field py-1 text-center" placeholder="400">
+                                            <label for="clicks-400" class="sr-only">Clicks at 400</label><input
+                                                type="text" id="clicks-400" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-400" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-400" class="sr-only">UDLR at 400</label><input type="text"
+                                                id="udlr-400" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-500" class="input-field py-1 text-center"
-                                                placeholder="500">
-                                            <input type="text" id="clicks-500" class="input-field py-1"
+                                            <label for="dist-500" class="sr-only">Distance 500</label><input type="text"
+                                                id="dist-500" class="input-field py-1 text-center" placeholder="500">
+                                            <label for="clicks-500" class="sr-only">Clicks at 500</label><input
+                                                type="text" id="clicks-500" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-500" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-500" class="sr-only">UDLR at 500</label><input type="text"
+                                                id="udlr-500" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-600" class="input-field py-1 text-center"
-                                                placeholder="600">
-                                            <input type="text" id="clicks-600" class="input-field py-1"
+                                            <label for="dist-600" class="sr-only">Distance 600</label><input type="text"
+                                                id="dist-600" class="input-field py-1 text-center" placeholder="600">
+                                            <label for="clicks-600" class="sr-only">Clicks at 600</label><input
+                                                type="text" id="clicks-600" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-600" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-600" class="sr-only">UDLR at 600</label><input type="text"
+                                                id="udlr-600" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-700" class="input-field py-1 text-center"
-                                                placeholder="700">
-                                            <input type="text" id="clicks-700" class="input-field py-1"
+                                            <label for="dist-700" class="sr-only">Distance 700</label><input type="text"
+                                                id="dist-700" class="input-field py-1 text-center" placeholder="700">
+                                            <label for="clicks-700" class="sr-only">Clicks at 700</label><input
+                                                type="text" id="clicks-700" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-700" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-700" class="sr-only">UDLR at 700</label><input type="text"
+                                                id="udlr-700" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-800" class="input-field py-1 text-center"
-                                                placeholder="800">
-                                            <input type="text" id="clicks-800" class="input-field py-1"
+                                            <label for="dist-800" class="sr-only">Distance 800</label><input type="text"
+                                                id="dist-800" class="input-field py-1 text-center" placeholder="800">
+                                            <label for="clicks-800" class="sr-only">Clicks at 800</label><input
+                                                type="text" id="clicks-800" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-800" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-800" class="sr-only">UDLR at 800</label><input type="text"
+                                                id="udlr-800" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-900" class="input-field py-1 text-center"
-                                                placeholder="900">
-                                            <input type="text" id="clicks-900" class="input-field py-1"
+                                            <label for="dist-900" class="sr-only">Distance 900</label><input type="text"
+                                                id="dist-900" class="input-field py-1 text-center" placeholder="900">
+                                            <label for="clicks-900" class="sr-only">Clicks at 900</label><input
+                                                type="text" id="clicks-900" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-900" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-900" class="sr-only">UDLR at 900</label><input type="text"
+                                                id="udlr-900" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                         <div class="grid grid-cols-3 gap-2 items-center bg-gray-800/20 p-1 rounded">
-                                            <input type="text" id="dist-1000" class="input-field py-1 text-center"
+                                            <label for="dist-1000" class="sr-only">Distance 1000</label><input
+                                                type="text" id="dist-1000" class="input-field py-1 text-center"
                                                 placeholder="1000">
-                                            <input type="text" id="clicks-1000" class="input-field py-1"
+                                            <label for="clicks-1000" class="sr-only">Clicks at 1000</label><input
+                                                type="text" id="clicks-1000" class="input-field py-1"
                                                 placeholder="Clicks">
-                                            <input type="text" id="udlr-1000" class="input-field py-1"
-                                                placeholder="UDLR">
+                                            <label for="udlr-1000" class="sr-only">UDLR at 1000</label><input
+                                                type="text" id="udlr-1000" class="input-field py-1" placeholder="UDLR">
                                         </div>
                                     </div>
                                 </div>
@@ -784,10 +825,10 @@
 
                             <!-- Session Timer Section -->
                             <div class="space-y-3 pt-4 border-t border-gray-800/50">
-                                <label class="section-label flex items-center gap-2">
+                                <span class="section-label flex items-center gap-2">
                                     <i data-lucide="timer" class="w-3 h-3 text-blue-400"></i>
                                     Session Timer
-                                </label>
+                                </span>
 
                                 <!-- Timer Display -->
                                 <div class="bg-neutral-800/60 border border-neutral-500 rounded-lg p-4 text-center">
@@ -820,7 +861,7 @@
 
                             <!-- Grade Your Shot Section -->
                             <div class="space-y-4 pt-4 border-t border-gray-800/50">
-                                <label class="section-label">Grade Your Shot</label>
+                                <span class="section-label">Grade Your Shot</span>
 
                                 <div
                                     class="flex flex-col items-center gap-4 bg-black/40 border border-gray-800 p-6 rounded-lg">
@@ -871,6 +912,7 @@
                                 </div>
 
                                 <div class="space-y-2">
+                                    <label for="shot-grade" class="sr-only">Shot Notes</label>
                                     <input type="text" id="shot-grade" class="input-field" placeholder="Shot Notes">
                                     <!-- Hidden field to store the color and grade name -->
                                     <input type="hidden" id="shot-grade-color">
@@ -925,10 +967,11 @@
                     <!-- Ballistic Core (Calculator) -->
                     <section class="bg-gray-900 border border-gray-800 rounded p-4 space-y-3">
                         <div class="flex items-center justify-between">
-                            <label class="section-label flex items-center gap-2 text-blue-400">
+                            <span class="section-label flex items-center gap-2 text-blue-400">
                                 <i data-lucide="cpu" class="w-3 h-3"></i> Ballistic Core
-                            </label>
+                            </span>
                         </div>
+                        <label for="calc-display" class="sr-only">Ballistic Calculator Display</label>
                         <input type="text" id="calc-display"
                             class="w-full bg-gray-900 text-right p-3 rounded font-mono text-neon-green text-xl border border-gray-800 mb-2"
                             readonly value="0">
@@ -1650,9 +1693,9 @@
                                     class="absolute inset-0 overflow-y-auto custom-scrollbar hidden p-10 bg-gray-900">
                                     <div class="max-w-3xl mx-auto space-y-10">
                                         <div class="border-b border-gray-800 pb-2">
-                                            <label
+                                            <span
                                                 class="text-[10px] text-neon-green font-bold uppercase mb-2 block">Header
-                                                Information</label>
+                                                Information</span>
                                             <p id="prevHeaderNotes"
                                                 class="text-sm text-gray-300 italic leading-relaxed">---
                                             </p>
@@ -1810,11 +1853,11 @@
             <div class="flex flex-nowrap border-b border-neutral-500 bg-neutral-800/40 px-4 shrink-0 overflow-x-auto scroll-smooth cursor-grab active:cursor-grabbing custom-scrollbar touch-pan-x"
                 style="-webkit-overflow-scrolling: touch;">
                 <button onclick="switchIntelTab('ai-advisor')" id="tab-ai-advisor"
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-blue-500 text-blue-500 transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-blue-500 text-blue-500 whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="brain" class="w-3.5 h-3.5"></i> AI Advisor
                 </button>
                 <button onclick="switchIntelTab('connectivity')" id="tab-connectivity"
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
+                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="signal" class="w-3.5 h-3.5"></i> CONNECTIVITY
                 </button>
                 <button onclick="switchIntelTab('weather-station')" id="tab-weather-station"
@@ -1826,7 +1869,7 @@
                     <i data-lucide="compass" class="w-3.5 h-3.5"></i> TACTICAL COMPASS
                 </button>
                 <button onclick="switchIntelTab('tactical-map')" id="tab-tactical-map"
-                    class="px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
+                    class="hidden px-6 py-4 text-[10px] font-black uppercase tracking-widest border-b-2 border-transparent text-gray-500 hover:text-[var(--input-text)] transition-all whitespace-nowrap flex-shrink-0 min-w-[120px] flex items-center justify-center gap-2">
                     <i data-lucide="map" class="w-3.5 h-3.5"></i> TACTICAL MAP
                 </button>
                 <button onclick="switchIntelTab('work-center')" id="tab-work-center"
@@ -1881,16 +1924,23 @@
                             <span class="text-[9px] font-black text-blue-200 uppercase tracking-widest">Live Mission
                                 Sync</span>
                         </div>
-                        <button id="owc-live-sync-btn" onclick="window.toggleOWCLiveSync()"
-                            class="px-2 py-1 bg-blue-600 rounded text-[8px] font-black text-white hover:bg-blue-500 transition-colors">
-                            LIVE: ON
-                        </button>
+                        <div class="flex gap-1">
+                            <button id="owc-unit-toggle-btn" onclick="window.toggleOWCUnits()"
+                                class="px-2 py-1 bg-zinc-800 border border-zinc-600 rounded text-[8px] font-black text-blue-400 hover:border-blue-500 transition-all">
+                                MODE: MIL
+                            </button>
+                            <button id="owc-live-sync-btn" onclick="window.toggleOWCLiveSync()"
+                                class="px-2 py-1 bg-blue-600 rounded text-[8px] font-black text-white hover:bg-blue-500 transition-colors">
+                                LIVE: ON
+                            </button>
+                        </div>
                     </div>
                     <div class="grid grid-cols-3 md:grid-cols-5 gap-2">
                         <!-- 1. RIFLE INFRA -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between hover:border-gray-800 transition-colors">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">01:
+                            <label for="owc-rifle-input"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">01:
                                 RIFLE</label>
                             <input type="text" id="owc-rifle-input" placeholder="SYSTEM-1"
                                 class="bg-transparent border-none text-[9px] font-black text-[var(--input-text)] w-full focus:outline-none p-0 uppercase"
@@ -1902,7 +1952,8 @@
                         <!-- 2. OPTIC CONTROL -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">02:
+                            <label for="owc-mag"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">02:
                                 OPTIC</label>
                             <div class="flex items-center justify-between">
                                 <span class="text-sm font-black text-[var(--input-text)]" id="owc-mag-val">12</span>
@@ -1916,13 +1967,14 @@
                         <!-- 3. AMMO / BC -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between hover:border-gray-800 transition-colors">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">03:
+                            <label for="owc-ammo-input"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">03:
                                 AMMO</label>
                             <input type="text" id="owc-ammo-input" placeholder="308 WIN"
                                 class="bg-transparent border-none text-[9px] font-black text-[var(--input-text)] w-full focus:outline-none p-0 uppercase"
                                 oninput="window.updateOWC()">
                             <div class="flex items-center gap-1 border-t border-gray-700 pt-1">
-                                <span class="text-[6px] text-zinc-500 font-bold uppercase">BC:</span>
+                                <label for="owc-bc" class="text-[6px] text-zinc-500 font-bold uppercase">BC:</label>
                                 <input type="number" id="owc-bc" value="0.510" step="0.001"
                                     class="bg-transparent border-none text-[8px] font-black text-blue-400 w-12 focus:outline-none p-0"
                                     oninput="window.updateOWC()">
@@ -1932,18 +1984,21 @@
                         <!-- 4. TARGET SIZE -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">04:
+                            <label for="owc-target-size"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">04:
                                 TARGET</label>
                             <input type="number" id="owc-target-size" placeholder="IN"
                                 class="bg-transparent border-none text-sm font-black text-[var(--input-text)] w-full focus:outline-none p-0"
                                 oninput="window.updateOWC()">
-                            <span class="text-[6px] text-zinc-600 font-bold uppercase">SIZE (IN)</span>
+                            <label for="owc-target-size" class="text-[6px] text-zinc-600 font-bold uppercase">SIZE
+                                (IN)</label>
                         </div>
 
                         <!-- 5. ZERO BOX -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">05:
+                            <label for="owc-zero"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">05:
                                 ZERO</label>
                             <input type="number" id="owc-zero" value="100"
                                 class="bg-transparent border-none text-sm font-black text-[var(--input-text)] w-full focus:outline-none p-0"
@@ -1955,7 +2010,8 @@
                         <div
                             class="bg-blue-600/10 border border-blue-500/30 p-2 rounded-lg flex flex-col justify-between shadow-lg group">
                             <div class="flex justify-between items-start">
-                                <label class="text-[7px] font-black text-blue-400 uppercase tracking-tighter mb-1">06:
+                                <label for="owc-range"
+                                    class="text-[7px] font-black text-blue-400 uppercase tracking-tighter mb-1">06:
                                     RANGE</label>
                                 <button onclick="window.switchIntelTab('tactical-map'); openIntelHub();"
                                     class="text-[7px] font-black bg-blue-600/20 text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/30 hover:bg-blue-600 hover:text-white transition-all opacity-0 group-hover:opacity-100 uppercase">
@@ -1965,13 +2021,14 @@
                             <input type="number" id="owc-range" placeholder="YDS"
                                 class="bg-transparent border-none text-lg font-black text-[var(--input-text)] w-full focus:outline-none p-0"
                                 oninput="window.updateOWC()">
-                            <span class="text-[6px] text-blue-600 font-bold uppercase">DISTANCE</span>
+                            <label for="owc-range" class="text-[6px] text-blue-600 font-bold uppercase">DISTANCE</label>
                         </div>
 
                         <!-- 7. LOS HEADING (VECTOR) -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between group">
-                            <label class="text-[7px] font-black text-blue-500 uppercase tracking-tighter mb-1">07: LOS
+                            <label for="owc-los-heading"
+                                class="text-[7px] font-black text-blue-500 uppercase tracking-tighter mb-1">07: LOS
                                 DEG</label>
                             <div class="flex items-center gap-1">
                                 <input type="number" id="owc-los-heading" value="0" min="0" max="359"
@@ -1985,7 +2042,8 @@
                         <!-- 8. COS / SLOPE -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">08:
+                            <label for="owc-angle"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">08:
                                 COS/U-D</label>
                             <div class="flex items-center gap-1">
                                 <input type="number" id="owc-angle" value="0"
@@ -2000,9 +2058,9 @@
                         <div id="owc-atmos-card"
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between transition-all duration-300">
                             <div class="flex justify-between items-center mb-1">
-                                <label id="owc-atmos-label"
+                                <span id="owc-atmos-label"
                                     class="text-[7px] font-black text-blue-500 uppercase tracking-tighter">09: DENS.
-                                    ALT</label>
+                                    ALT</span>
                                 <button onclick="window.fetchLiveWeather()"
                                     class="text-[6px] font-black bg-orange-600 px-1.5 py-0.5 rounded border border-orange-400 text-white hover:bg-orange-500 transition-all flex items-center gap-1">
                                     <i data-lucide="map-pin" class="w-2 h-2"></i> LIVE
@@ -2029,6 +2087,7 @@
                                 <div class="grid grid-cols-2 gap-1">
                                     <div
                                         class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
+                                        <label for="owc-alt" class="sr-only">Altitude</label>
                                         <input type="number" id="owc-alt" value="0" placeholder="ALT"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
@@ -2036,6 +2095,7 @@
                                     </div>
                                     <div
                                         class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
+                                        <label for="owc-temp" class="sr-only">Temperature</label>
                                         <input type="number" id="owc-temp" value="59" placeholder="TEMP"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
@@ -2045,6 +2105,7 @@
                                 <div class="grid grid-cols-2 gap-1">
                                     <div
                                         class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
+                                        <label for="owc-hum" class="sr-only">Humidity</label>
                                         <input type="number" id="owc-hum" value="50" placeholder="HUM"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
@@ -2052,6 +2113,7 @@
                                     </div>
                                     <div
                                         class="flex items-center justify-between bg-neutral-800/20 rounded px-1 py-0.5">
+                                        <label for="owc-press" class="sr-only">Pressure</label>
                                         <input type="number" id="owc-press" value="29.92" step="0.01" placeholder="PRES"
                                             class="bg-transparent text-[10px] font-black text-blue-400 w-full outline-none border-none focus:ring-0"
                                             oninput="if(window.owcLiveSync) window.toggleOWCLiveSync(); window.updateOWC()">
@@ -2065,21 +2127,24 @@
                                 </div>
                             </div>
 
-                            <span id="owc-atmos-footer" class="text-[6px] text-zinc-600 font-bold uppercase">DENS.
-                                ALTITUDE</span>
+                            <label for="owc-da" id="owc-atmos-footer"
+                                class="text-[6px] text-zinc-600 font-bold uppercase">DENS.
+                                ALTITUDE</label>
                         </div>
 
                         <!-- 10. ELEVATION ANSWER (GOAL) -->
                         <div
                             class="bg-blue-600 border-2 border-blue-400 p-3 rounded-xl flex flex-col shadow-[0_0_15px_rgba(37,99,235,0.4)] col-span-2 md:col-span-1">
-                            <label
+                            <span
                                 class="text-[8px] font-black text-[var(--input-text)]/80 uppercase tracking-widest mb-1">10:
-                                ELEVATION ANSWER</label>
+                                ELEVATION ANSWER</span>
                             <div class="flex items-baseline justify-between overflow-hidden">
                                 <div class="flex items-baseline gap-1">
                                     <span id="owc-elev-dir" class="text-xl font-black text-blue-200 opacity-80">U</span>
                                     <span id="owc-elev-mils"
                                         class="text-3xl font-black text-[var(--input-text)] leading-none">0.0</span>
+                                    <span
+                                        class="text-[10px] font-black text-blue-200 uppercase owc-unit-label">MIL</span>
                                 </div>
                                 <div class="text-right">
                                     <span id="owc-elev-inches"
@@ -2097,18 +2162,19 @@
                         <!-- 11. WIND VECTOR -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between relative overflow-hidden">
-                            <label class="text-[7px] font-black text-blue-500 uppercase tracking-tighter mb-1">11:
-                                WIND</label>
+                            <span class="text-[7px] font-black text-blue-500 uppercase tracking-tighter mb-1">11:
+                                WIND</span>
                             <div class="flex items-center justify-between">
                                 <div class="flex items-center">
+                                    <label for="owc-wind-dir" class="sr-only">Wind Direction</label>
                                     <input type="number" id="owc-wind-dir" value="270" min="0" max="359"
                                         class="bg-transparent border-none text-sm font-black text-[var(--input-text)] w-10 focus:outline-none p-0"
                                         oninput="window.updateOWC()">
                                     <span class="text-[7px] font-bold text-zinc-500">°</span>
                                 </div>
                                 <div class="flex items-center gap-1">
-                                    <span id="owc-wind-speed-val"
-                                        class="text-sm font-black text-[var(--input-text)]">20</span>
+                                    <label for="owc-wind-speed" id="owc-wind-speed-val"
+                                        class="text-sm font-black text-[var(--input-text)]">20</label>
                                     <span class="text-[7px] font-bold text-zinc-500">MPH</span>
                                 </div>
                             </div>
@@ -2123,11 +2189,11 @@
                         <!-- 12. SPIN DRIFT -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">12:
-                                SPIN</label>
+                            <span class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">12:
+                                SPIN</span>
                             <div class="flex items-baseline gap-1">
                                 <span id="owc-spin-val" class="text-sm font-black text-[var(--input-text)]">0.0</span>
-                                <span class="text-[6px] font-bold text-zinc-600">MIL</span>
+                                <span class="text-[6px] font-bold text-zinc-600 owc-unit-label">MIL</span>
                             </div>
                             <span class="text-[6px] text-zinc-600 font-bold uppercase">GYRO DRIFT</span>
                         </div>
@@ -2135,7 +2201,8 @@
                         <!-- 13. M/V NUDGE -->
                         <div
                             class="bg-[var(--input-bg)] border border-[var(--input-border)] p-2 rounded-lg flex flex-col justify-between">
-                            <label class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">13:
+                            <label for="owc-mv"
+                                class="text-[7px] font-black text-zinc-500 uppercase tracking-tighter mb-1">13:
                                 M/V</label>
                             <input type="number" id="owc-mv" value="2700"
                                 class="bg-transparent border-none text-sm font-black text-[var(--input-text)] w-full focus:outline-none p-0"
@@ -2146,9 +2213,9 @@
                         <!-- 14. WINDAGE ANSWER (TALL BOX UNDER #11) -->
                         <div
                             class="bg-blue-600 border-2 border-blue-400 p-3 rounded-xl flex flex-col items-center justify-between shadow-[0_0_15px_rgba(37,99,235,0.4)] col-span-1 row-span-2 min-h-[180px] text-center overflow-visible">
-                            <label
+                            <span
                                 class="text-[7px] font-black text-[var(--input-text)]/80 uppercase tracking-widest">14:
-                                WINDAGE</label>
+                                WINDAGE</span>
 
                             <div class="flex flex-col items-center gap-1 my-1">
                                 <div class="flex items-center gap-1">
@@ -2157,7 +2224,8 @@
                                     <span id="owc-wind-mils"
                                         class="text-3xl font-black text-[var(--input-text)] leading-none">0.0</span>
                                 </div>
-                                <span class="text-[8px] font-black text-blue-200 uppercase tracking-tighter">MILS</span>
+                                <span
+                                    class="text-[8px] font-black text-blue-200 uppercase tracking-tighter owc-unit-label">MILS</span>
                             </div>
 
                             <div class="flex flex-col items-center border-y border-blue-400/40 py-2 w-full">
@@ -2177,9 +2245,9 @@
                         <!-- 15. RETICLE SYNC (WIDE BOX) -->
                         <div
                             class="bg-[var(--input-bg)]/40 border border-[var(--input-border)] p-2 rounded-lg flex flex-col items-center justify-center relative overflow-hidden min-h-[100px] shadow-inner col-span-2">
-                            <label
+                            <span
                                 class="text-[7px] font-black text-blue-500 uppercase tracking-tighter absolute top-2">15:
-                                RETICLE SYNC</label>
+                                RETICLE SYNC</span>
                             <div class="w-16 h-16 border-2 border-gray-800 rounded-full relative bg-black mt-2">
                                 <div class="absolute inset-0 flex items-center justify-center">
                                     <div class="w-full h-[0.5px] bg-[var(--input-bg)]/50"></div>
@@ -2340,6 +2408,7 @@
 
                         <div
                             class="flex items-center gap-2 bg-[var(--input-bg)]/40 border border-[var(--input-border)] rounded-lg px-3 py-1.5 focus-within:border-blue-500/50 transition-colors mx-4">
+                            <label for="ai-chat-input" class="sr-only">AI Advisor Command</label>
                             <span class="text-blue-900 font-black text-xs mr-1">></span>
                             <input type="text" id="ai-chat-input"
                                 class="flex-1 bg-transparent border-none text-[10px] text-[var(--input-text)] placeholder-zinc-700 focus:outline-none"
@@ -2357,9 +2426,9 @@
                 <div id="intel-tactical-map" class="hidden space-y-4">
                     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between px-4 pt-2 gap-3">
                         <div class="flex items-center gap-2">
-                            <i data-lucide="map" class="w-4 h-4 text-blue-500"></i>
-                            <span class="text-[10px] font-black text-blue-500 uppercase tracking-[0.2em]">Map Range
-                                Analysis</span>
+                            <i data-lucide="globe" class="w-4 h-4 text-blue-500"></i>
+                            <span class="text-[10px] font-black text-blue-100 uppercase tracking-[0.2em]">Google
+                                Satellite Range Analysis</span>
                         </div>
                         <div class="flex flex-wrap gap-2">
                             <button onclick="window.toggleMapUnits()"
@@ -2381,9 +2450,14 @@
                         </div>
                     </div>
                     <div class="px-4">
-                        <div id="tactical-map-container"
+                        <!-- Visual shell: carries overflow-hidden & rounded corners.
+                             The actual Leaflet container sits inside with absolute positioning
+                             so Leaflet always reads correct pixel dimensions. -->
+                        <div
                             class="w-full h-[450px] rounded-2xl border-2 border-neutral-500/50 overflow-hidden shadow-2xl relative bg-neutral-900">
-                            <!-- Map will be initialized here -->
+                            <div id="tactical-map-container" style="position:absolute;inset:0;width:100%;height:100%;">
+                                <!-- Map initialized here -->
+                            </div>
                         </div>
                         <div
                             class="mt-4 bg-neutral-800/50 border border-neutral-500 p-4 rounded-xl flex items-center justify-between">
@@ -2396,11 +2470,13 @@
                                             class="text-xs text-blue-500">YDS</span></h3>
                                 </div>
                             </div>
-                            <div class="text-right">
-                                <p class="text-[8px] text-zinc-500 font-black uppercase mb-1">Accuracy</p>
-                                <span
-                                    class="text-[10px] font-mono text-emerald-400 flex items-center justify-end gap-1">
-                                    <i data-lucide="check-circle-2" class="w-3 h-3"></i> HIGH
+                            <div class="flex flex-col items-end gap-2">
+                                <button onclick="window.syncMapRange()"
+                                    class="bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-black px-3 py-1.5 rounded uppercase transition-all flex items-center gap-1.5">
+                                    <i data-lucide="arrow-up-right" class="w-3 h-3"></i> Sync Range → OWC
+                                </button>
+                                <span class="text-[9px] font-mono text-emerald-400 flex items-center gap-1">
+                                    <i data-lucide="check-circle-2" class="w-3 h-3"></i> GPS READY
                                 </span>
                             </div>
                         </div>
@@ -2649,6 +2725,7 @@
 
                     <!-- Command Input (Future Proofing) -->
                     <div class="flex gap-2">
+                        <label for="bt-cmd-input" class="sr-only">Bluetooth Command Input</label>
                         <input type="text" id="bt-cmd-input" placeholder="ENTER COMMAND (HEX/ASCII)" disabled
                             class="flex-1 bg-black/40 border border-gray-800 rounded px-3 py-2 text-[10px] text-white font-mono outline-none focus:border-blue-500">
                         <button disabled
@@ -2678,6 +2755,7 @@
                                     <span class="text-[8px] font-bold text-zinc-400 uppercase">MAGNIFICATION</span>
                                     <span id="label-zoom-val-p" class="text-[10px] font-black text-white">1.0X</span>
                                 </div>
+                                <label for="scope-cam-zoom-p" class="sr-only">Scope Magnification (Portrait)</label>
                                 <input type="range" id="scope-cam-zoom-p" min="1" max="10" step="0.1" value="1"
                                     oninput="window.syncScopeZoom(this.value)"
                                     class="w-full accent-blue-500 h-1 bg-white/10 rounded-lg appearance-none">
@@ -2752,6 +2830,7 @@
                                     <span>MAGNIFICATION</span>
                                     <span id="label-zoom-val-l">1.0X</span>
                                 </div>
+                                <label for="scope-cam-zoom-l" class="sr-only">Scope Magnification (Landscape)</label>
                                 <input type="range" id="scope-cam-zoom-l" min="1" max="10" step="0.1" value="1"
                                     oninput="window.syncScopeZoom(this.value)"
                                     class="w-full h-1 bg-white/10 rounded-lg appearance-none accent-blue-500">
@@ -2971,7 +3050,8 @@
                         <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
                             <!-- Target Size Input with Presets -->
                             <div class="bg-zinc-800 p-2 rounded">
-                                <label class="text-[8px] text-zinc-500 uppercase font-black">Target Size (in)</label>
+                                <label for="target-size-input"
+                                    class="text-[8px] text-zinc-500 uppercase font-black">Target Size (in)</label>
                                 <div class="flex gap-1 mt-1">
                                     <input type="number" id="target-size-input" placeholder="18"
                                         class="flex-1 bg-transparent text-white text-sm font-black border-none focus:outline-none"
@@ -2985,7 +3065,7 @@
 
                             <!-- Calculated Range with Status -->
                             <div class="bg-zinc-800 p-2 rounded">
-                                <label class="text-[8px] text-zinc-500 uppercase font-black">Range (yards)</label>
+                                <span class="text-[8px] text-zinc-500 uppercase font-black">Range (yards)</span>
                                 <div class="flex items-center gap-2 mt-1">
                                     <div id="calculated-range" class="text-green-400 text-lg font-black">--</div>
                                     <div id="range-status" class="text-[7px] font-black"></div>
@@ -2994,8 +3074,8 @@
 
                             <!-- Precision Nudge & Reticle -->
                             <div class="bg-zinc-800 p-2 rounded col-span-2">
-                                <label class="text-[8px] text-zinc-500 uppercase font-black">Digital MIL-Caliper /
-                                    Reticle</label>
+                                <span class="text-[8px] text-zinc-500 uppercase font-black">Digital MIL-Caliper /
+                                    Reticle</span>
                                 <div class="flex gap-2 mt-1">
                                     <div class="flex bg-black/40 rounded p-1 border border-white/5 gap-2">
                                         <button onclick="window.nudgeMeasure(-1)"
@@ -3007,6 +3087,7 @@
                                             <i data-lucide="plus-square" class="w-4 h-4"></i>
                                         </button>
                                     </div>
+                                    <label for="reticle-type-select" class="sr-only">Reticle Type</label>
                                     <select id="reticle-type-select" onchange="window.updateReticleType(this.value)"
                                         class="flex-1 bg-black/40 text-[9px] text-white font-black uppercase border border-white/10 rounded px-2 outline-none focus:border-blue-500">
                                         <option value="box">Standard Box</option>
@@ -3023,8 +3104,8 @@
                             <!-- Object Size (Calibrated) -->
                             <div class="bg-zinc-800 p-2 rounded col-span-2">
                                 <div class="flex justify-between items-center">
-                                    <label class="text-[8px] text-zinc-500 uppercase font-black">Ref Calibrated / Object
-                                        Size (in)</label>
+                                    <span class="text-[8px] text-zinc-500 uppercase font-black">Ref Calibrated / Object
+                                        Size (in)</span>
                                     <button onclick="window.requestFOVCal()"
                                         class="text-[7px] text-purple-400 hover:text-white underline uppercase">Calibrate
                                         FOV</button>
@@ -3037,12 +3118,12 @@
 
                             <!-- Metadata Display -->
                             <div class="bg-zinc-800 p-2 rounded">
-                                <label class="text-[8px] text-zinc-500 uppercase font-black">GPS</label>
+                                <span class="text-[8px] text-zinc-500 uppercase font-black">GPS</span>
                                 <div id="detail-gps" class="text-zinc-300 text-[9px] font-mono mt-1">--</div>
                             </div>
 
                             <div class="bg-zinc-800 p-2 rounded">
-                                <label class="text-[8px] text-zinc-500 uppercase font-black">Heading / Angle</label>
+                                <span class="text-[8px] text-zinc-500 uppercase font-black">Heading / Angle</span>
                                 <div id="detail-heading-angle" class="text-zinc-300 text-[9px] font-mono mt-1">--</div>
                             </div>
                         </div>
@@ -3069,7 +3150,7 @@
                             <label
                                 class="bg-blue-600 hover:bg-blue-500 text-white text-[9px] font-black px-3 py-1.5 rounded uppercase tracking-widest transition-all cursor-pointer flex items-center gap-2">
                                 <i data-lucide="upload" class="w-3 h-3"></i> IMPORT
-                                <input type="file" accept="video/*" class="hidden"
+                                <input type="file" id="field-tape-file-input" accept="video/*" class="hidden"
                                     onchange="window.loadFieldTape(this)">
                             </label>
                             <button onclick="window.exportCurrentTape()"
@@ -3102,26 +3183,30 @@
                             </h3>
 
                             <div class="space-y-1">
-                                <label class="text-[9px] text-zinc-500 font-bold uppercase">Batch Name</label>
+                                <label for="batch-name-input" class="text-[9px] text-zinc-500 font-bold uppercase">Batch
+                                    Name</label>
                                 <input type="text" id="batch-name-input" placeholder="e.g. M118LR 2023"
                                     class="w-full bg-black/40 border border-zinc-700 rounded px-3 py-3 text-xs text-white font-bold outline-none focus:border-blue-500">
                             </div>
 
                             <div class="grid grid-cols-2 gap-4">
                                 <div class="space-y-1">
-                                    <label class="text-[9px] text-zinc-500 font-bold uppercase">Muzzle Vel (FPS)</label>
+                                    <label for="batch-mv-input"
+                                        class="text-[9px] text-zinc-500 font-bold uppercase">Muzzle Vel (FPS)</label>
                                     <input type="number" id="batch-mv-input" value="2700"
                                         class="w-full bg-black/40 border border-zinc-700 rounded px-3 py-3 text-xs text-white font-mono outline-none focus:border-blue-500">
                                 </div>
                                 <div class="space-y-1">
-                                    <label class="text-[9px] text-zinc-500 font-bold uppercase">BC (G1)</label>
+                                    <label for="batch-bc-input" class="text-[9px] text-zinc-500 font-bold uppercase">BC
+                                        (G1)</label>
                                     <input type="number" id="batch-bc-input" value="0.450" step="0.001"
                                         class="w-full bg-black/40 border border-zinc-700 rounded px-3 py-3 text-xs text-white font-mono outline-none focus:border-blue-500">
                                 </div>
                             </div>
 
                             <div class="space-y-1">
-                                <label class="text-[9px] text-zinc-500 font-bold uppercase">Zero Range (Y)</label>
+                                <label for="batch-zero-input" class="text-[9px] text-zinc-500 font-bold uppercase">Zero
+                                    Range (Y)</label>
                                 <input type="number" id="batch-zero-input" value="100"
                                     class="w-full bg-black/40 border border-zinc-700 rounded px-3 py-3 text-xs text-white font-mono outline-none focus:border-blue-500">
                             </div>
@@ -3297,8 +3382,9 @@
                                 </h4>
                                 <div class="grid gap-3">
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">ALT
-                                            (FT)</span>
+                                        <label for="sim-alt"
+                                            class="text-[8px] text-zinc-500 font-bold uppercase ml-1">ALT
+                                            (FT)</label>
                                         <div
                                             class="flex items-center bg-black/40 rounded border border-gray-800 overflow-hidden">
                                             <button id="sim-alt-minus"
@@ -3312,8 +3398,9 @@
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">TEMP
-                                            (°F)</span>
+                                        <label for="sim-temp"
+                                            class="text-[8px] text-zinc-500 font-bold uppercase ml-1">TEMP
+                                            (°F)</label>
                                         <div
                                             class="flex items-center bg-neutral-800/40 rounded border border-neutral-500 overflow-hidden">
                                             <button id="sim-temp-minus"
@@ -3327,8 +3414,9 @@
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">HUM
-                                            (%)</span>
+                                        <label for="sim-hum"
+                                            class="text-[8px] text-zinc-500 font-bold uppercase ml-1">HUM
+                                            (%)</label>
                                         <div
                                             class="flex items-center bg-neutral-800/40 rounded border border-neutral-500 overflow-hidden">
                                             <button id="sim-hum-minus"
@@ -3342,8 +3430,9 @@
                                         </div>
                                     </div>
                                     <div class="flex flex-col gap-1">
-                                        <span class="text-[8px] text-zinc-500 font-bold uppercase ml-1">PRESS
-                                            (ALT)</span>
+                                        <label for="sim-press"
+                                            class="text-[8px] text-zinc-500 font-bold uppercase ml-1">PRESS
+                                            (ALT)</label>
                                         <div
                                             class="flex items-center bg-neutral-800/40 rounded border border-neutral-500 overflow-hidden">
                                             <button id="sim-press-minus"
@@ -3405,6 +3494,7 @@
                                 <div
                                     class="flex items-center gap-1 bg-neutral-800/40 px-3 py-2 rounded-lg border border-neutral-500/20 shadow-inner">
                                     <span class="text-[7px] text-zinc-500 uppercase font-black">DATA:</span>
+                                    <label for="dope-source-select" class="sr-only">Data Source</label>
                                     <select id="dope-source-select" onchange="window.generateQuickDope()"
                                         class="bg-transparent text-blue-400 text-[9px] font-black uppercase outline-none cursor-pointer">
                                         <option value="smart">SMART AUTO</option>
@@ -3416,6 +3506,7 @@
                                 <div
                                     class="flex items-center gap-1 bg-neutral-800/40 px-3 py-2 rounded-lg border border-neutral-500/20 shadow-inner">
                                     <span class="text-[7px] text-zinc-500 uppercase font-black">STEP:</span>
+                                    <label for="dope-step-select" class="sr-only">Step Size</label>
                                     <select id="dope-step-select" onchange="window.generateQuickDope()"
                                         class="bg-transparent text-orange-400 text-[9px] font-black uppercase outline-none cursor-pointer">
                                         <option value="100">100Y</option>
@@ -3428,6 +3519,7 @@
                                 <div
                                     class="flex items-center gap-1 bg-neutral-800/40 px-3 py-2 rounded-lg border border-neutral-500/20 shadow-inner">
                                     <span class="text-[7px] text-zinc-500 uppercase font-black">MAX:</span>
+                                    <label for="dope-max-select" class="sr-only">Max Range</label>
                                     <select id="dope-max-select" onchange="window.generateQuickDope()"
                                         class="bg-transparent text-emerald-400 text-[9px] font-black uppercase outline-none cursor-pointer">
                                         <option value="800">800Y</option>
@@ -3708,7 +3800,7 @@
                                 <!-- Range Control -->
                                 <div class="space-y-1">
                                     <div class="flex justify-between text-[9px] font-black uppercase text-zinc-400">
-                                        <span>Target Range</span>
+                                        <label for="spotter-range">Target Range</label>
                                         <span id="spotter-range-val" class="text-[var(--input-text)]">500 YDS</span>
                                     </div>
                                     <input type="range" id="spotter-range" min="0" max="1000" step="10" value="500"
@@ -3718,7 +3810,7 @@
                                 <!-- Wind Control -->
                                 <div class="space-y-1">
                                     <div class="flex justify-between text-[9px] font-black uppercase text-zinc-400">
-                                        <span>Wind Velocity</span>
+                                        <label for="spotter-wind-slider">Wind Velocity</label>
                                         <span id="spotter-wind-val" class="text-[var(--input-text)]">0 MPH</span>
                                     </div>
                                     <input type="range" id="spotter-wind-slider" min="-20" max="20" step="1" value="0"
@@ -3731,7 +3823,8 @@
                                 <div class="grid grid-cols-2 gap-4">
                                     <!-- Elevation Dial -->
                                     <div class="space-y-1">
-                                        <label class="text-[9px] font-black text-zinc-500 uppercase block mb-1">Dial
+                                        <label for="spotter-manual-elev"
+                                            class="text-[9px] font-black text-zinc-500 uppercase block mb-1">Dial
                                             Elevation (MOA)</label>
                                         <div class="flex items-center gap-1">
                                             <button id="spotter-manual-elev-minus"
@@ -3744,7 +3837,8 @@
                                     </div>
                                     <!-- Windage Dial -->
                                     <div class="space-y-1">
-                                        <label class="text-[9px] font-black text-zinc-500 uppercase block mb-1">Dial
+                                        <label for="spotter-manual-wind"
+                                            class="text-[9px] font-black text-zinc-500 uppercase block mb-1">Dial
                                             Windage
                                             (MOA)</label>
                                         <div class="flex items-center gap-1">
@@ -3786,7 +3880,8 @@
                                     class="bg-[var(--input-bg)] border border-[var(--input-border)] rounded-lg p-3 space-y-3">
                                     <div class="grid grid-cols-2 gap-3">
                                         <div class="space-y-1">
-                                            <label class="text-[8px] text-zinc-500 font-bold uppercase">Tactical
+                                            <label for="hmil-target-type"
+                                                class="text-[8px] text-zinc-500 font-bold uppercase">Tactical
                                                 Object</label>
                                             <select id="hmil-target-type"
                                                 class="w-full bg-[var(--input-bg)] border border-gray-800 rounded h-10 text-[10px] text-[var(--input-text)] font-black uppercase px-2 outline-none focus:border-orange-500">
@@ -3797,8 +3892,8 @@
                                             </select>
                                         </div>
                                         <div class="space-y-1">
-                                            <label class="text-[8px] text-zinc-500 font-bold uppercase">Scope Aiming
-                                                (Pan)</label>
+                                            <span class="text-[8px] text-zinc-500 font-bold uppercase">Scope Aiming
+                                                (Pan)</span>
                                             <div class="grid grid-cols-3 gap-1">
                                                 <div class="col-start-2">
                                                     <button onclick="window.nudgeHMIL('up')"
@@ -3835,7 +3930,8 @@
                                     <!-- Solution Entry -->
                                     <div class="grid grid-cols-2 gap-3 pt-2">
                                         <div class="space-y-1">
-                                            <label class="text-[8px] text-zinc-500 font-bold uppercase">Est.
+                                            <label for="hmil-user-dist"
+                                                class="text-[8px] text-zinc-500 font-bold uppercase">Est.
                                                 Distance
                                                 (YDS)</label>
                                             <input type="number" id="hmil-user-dist" placeholder="000"
@@ -3931,10 +4027,10 @@
                     <div class="p-4 overflow-y-auto custom-scrollbar flex-1 space-y-6">
                         <!-- Card Model Selection -->
                         <div class="space-y-4">
-                            <label class="section-label flex items-center gap-2">
+                            <span class="section-label flex items-center gap-2">
                                 <i data-lucide="layout-template" class="w-3 h-3 text-neon-green"></i>
                                 Tactical Card Models
-                            </label>
+                            </span>
                             <div class="grid grid-cols-2 gap-2">
                                 <button onclick="setCardModel('standard')" id="card-model-standard"
                                     class="card-model-btn p-2 rounded-lg border border-neutral-600 bg-neutral-800/40 text-left transition-all hover:border-neon-green hover:bg-neon-green/5">
@@ -3998,7 +4094,7 @@
 
                         <!-- Profile Selector -->
                         <div>
-                            <label class="section-label">Active Profile</label>
+                            <span class="section-label">Active Profile</span>
                             <select id="modal-weapon-profile-select" class="input-field w-full"
                                 onchange="WeaponProfiles.load(this.value)">
                                 <option value="">-- Select Profile --</option>
@@ -4007,7 +4103,7 @@
 
                         <!-- List -->
                         <div>
-                            <label class="section-label">Saved Profiles</label>
+                            <span class="section-label">Saved Profiles</span>
                             <div id="weapon-profiles-list" class="space-y-2 mt-2">
                                 <!-- Populated by JS -->
                             </div>
@@ -4027,69 +4123,14 @@
 
 
             <!-- Map Logic -->
-            <!-- Map Logic -->
             <script>
-                // ROBUST MAP INIT CHECKER & DEBUGGER
-                (function () {
-                    function log(msg) {
-                        const dbg = document.getElementById('map-debug-overlay');
-                        if (dbg) dbg.innerHTML += `<div>${msg}</div>`;
-                        console.log(`[MAP_DEBUG] ${msg}`);
-                    }
-
-                    let checks = 0;
-                    const output = setInterval(() => {
-                        checks++;
-                        const container = document.getElementById('tactical-map-container');
-
-                        // Create Debug Overlay if missing
-                        if (container && !document.getElementById('map-debug-overlay')) {
-                            const overlay = document.createElement('div');
-                            overlay.id = 'map-debug-overlay';
-                            overlay.className = 'absolute inset-0 z-[9999] pointer-events-none p-4 font-mono text-[10px] text-green-400 bg-black/10 overflow-auto border border-green-500/30';
-                            overlay.innerHTML = '<div class="font-bold text-lg mb-2">MAP DIAGNOSTICS</div>';
-                            container.appendChild(overlay);
-                            log("Diagnostics started...");
-                        }
-
-                        // 1. Check Container
-                        if (container) {
-                            if (!container || container.offsetParent === null) {
-                                return; // Hidden, wait
-                            }
-
-                            // 2. Check Leaflet
-                            if (typeof L === 'undefined') {
-                                return; // Leaflet not loaded yet
-                            }
-
-                            // 3. Check for Existing Map
-                            if (window.map) {
-                                clearInterval(output);
-                                return;
-                            }
-
-                            // 4. Force Init
-                            if (typeof window.initSatelliteMap === 'function') {
-                                try {
-                                    window.initSatelliteMap();
-                                } catch (e) {
-                                    console.error("Map Init Error:", e);
-                                }
-                            }
-
-                        }
-
-                        // Stop checking after 60 checks
-                        if (checks >= 60) {
-                            clearInterval(output);
-                        }
-                    }, 500);
-                })();
+                // REMOVED WATCHDOG TO PREVENT RACE CONDITIONS
+                // Map is handled exclusively by switchIntelTab and map_logic.js
             </script>
-            <script src="map_logic.js?v=CACHEBUST_FIX"></script>
+            <script src="script.js"></script>
+            <!-- <script src="map_logic.js"></script> -->
             <script src="card_templates.js"></script>
-            <script src="script.js?v=3.8"></script>
+            <script src="phase3_functions.js"></script>
             <script> lucide.createIcons(); </script>
             <script>
                 if ('serviceWorker' in navigator && window.location.protocol !== 'file:') {
@@ -4097,18 +4138,7 @@
                         navigator.serviceWorker.register('sw.js')
                             .then(reg => {
                                 console.log('Service Worker registered', reg);
-
-                                // Listen for updates to the service worker
-                                reg.addEventListener('updatefound', () => {
-                                    const newWorker = reg.installing;
-                                    newWorker.addEventListener('statechange', () => {
-                                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                            // New content is available, force reload
-                                            console.log('New content available, reloading...');
-                                            window.location.reload();
-                                        }
-                                    });
-                                });
+                                // Manual update check only to prevent reload loops
                             })
                             .catch(err => console.log('Service Worker registration failed', err));
                     });

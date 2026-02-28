@@ -1,272 +1,349 @@
-// TACTICAL MAP LOGIC
-// Uses Leaflet.js + Esri World Imagery
+// TACTICAL MAP LOGIC (V4.9) — Google Satellite + Manual-First Fix
 
-// Explicitly attach to window to ensure watchdog sees it
+// ── Global State ────────────────────────────────────────────────────────────
 window.map = null;
 window.shooterMarker = null;
 window.targetMarkers = [];
 window.rangeLines = [];
-let useMeters = false; // Default to Yards
-let mapPathMode = false; // False = Radial (Shooter->All), True = Chain (Shooter->T1->T2...)
 
-console.log(">> MAP_LOGIC_JS LOADED <<");
+// Internal state
+let _mapUseMeters = false;
+let _mapPathMode = false;
+let _mapInitializing = false;
+let _mapInitialized = false;
+let _mapResizeObserver = null;
 
-window.initSatelliteMap = function (forceReinit = false) {
-    // VISUAL DEBUGGER
-    const dbg = document.getElementById('map-debug-overlay');
-    if (dbg) dbg.innerHTML += `<div class="text-blue-400 font-bold">>> EXEC: initSatelliteMap (V3)</div>`;
+// ── Icons (Custom Styled) ───────────────────────────────────────────────────
+function _makeShooterIcon() {
+    return L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div style="
+            width:22px;height:22px;border-radius:50%;
+            background:#3b82f6;border:3px solid #fff;
+            box-shadow:0 0 15px rgba(59,130,246,0.8);
+            display:flex;align-items:center;justify-content:center;">
+            <div style="width:6px;height:6px;background:#fff;border-radius:50%;"></div>
+        </div>`,
+        iconSize: [22, 22],
+        iconAnchor: [11, 11]
+    });
+}
 
-    console.log("[MAP_LOGIC] initSatelliteMap trigger...");
+function _makeTargetIcon() {
+    return L.divIcon({
+        className: 'custom-div-icon',
+        html: `<div style="
+            width:18px;height:18px;
+            background:#ef4444;border:2px solid #fff;
+            transform:rotate(45deg);
+            box-shadow:0 0 12px rgba(239,68,68,0.8);">
+        </div>`,
+        iconSize: [18, 18],
+        iconAnchor: [9, 9]
+    });
+}
+
+// ── Core Initialization ──────────────────────────────────────────────────────
+window.initTacticalMap = function (forceReinit = false) {
+    if (_mapInitializing) return;
     const container = document.getElementById('tactical-map-container');
-    if (!container) {
-        if (dbg) dbg.innerHTML += `<div class="text-red-500">FAIL: Container not found</div>`;
-        console.error("[MAP_LOGIC] Container missing");
+    if (!container) return;
+
+    if (window.map && !forceReinit) {
+        console.log("[MAP] Map exists, refreshing size...");
+        window.refreshMapSize();
+        _shoveMapSize();
         return;
     }
 
+    // Full Reset
+    if (window.map) {
+        try { window.map.remove(); } catch (e) { }
+        window.map = null;
+        window.shooterMarker = null;
+        window.targetMarkers = [];
+        window.rangeLines = [];
+        container.innerHTML = '';
+    }
+    if (_mapResizeObserver) {
+        _mapResizeObserver.disconnect();
+        _mapResizeObserver = null;
+    }
+
+    _mapInitializing = true;
+    _buildMap(container);
+};
+
+// ── Utility: High-Reliability Refresh ─────────────────────────────
+// Unlike simple timeouts, this monitors the actual height to ensure 
+// Leaflet never "settles" while the container is still hidden or resizing.
+// ── Utility: High-Reliability Refresh ─────────────────────────────
+// Instead of a high-frequency loop, we use a series of well-timed refreshes.
+function _shoveMapSize() {
+    if (!window.map) return;
+
+    // Refresh at key intervals to catch layout shifts
+    [50, 250, 750, 1500, 2500].forEach(delay => {
+        setTimeout(() => {
+            if (window.map) {
+                window.map.invalidateSize({ animate: false, pan: false });
+            }
+        }, delay);
+    });
+}
+
+function _buildMap(container) {
+    if (typeof L === 'undefined') {
+        console.warn("[MAP] Leaflet (L) not found, retrying...");
+        setTimeout(() => _buildMap(container), 200);
+        return;
+    }
+
+    // HEALTH CHECK: Ensure container is actually visible and has size
+    const rect = container.getBoundingClientRect();
+    const isVisible = container.offsetParent !== null; // Standard visibility check
+
+    if (!isVisible || rect.width < 50 || rect.height < 50) {
+        // RESET FLAG so we can retry
+        _mapInitializing = false;
+        console.log(`[MAP] Container not ready (${rect.width}x${rect.height}, visible:${isVisible}). Retrying...`);
+        setTimeout(() => _buildMap(container), 250);
+        return;
+    }
+
+
     try {
-        // Prevent double init
-        if (window.map) {
-            window.map.invalidateSize();
-            return;
-        }
-
-        // Check dependencies
-        if (typeof L === 'undefined') throw new Error("Leaflet L is undefined");
-
-        // --- DEFINE ICONS INSIDE FUNCTION TO ENSURE 'L' IS READY ---
-        const shooterIcon = L.divIcon({
-            className: 'shooter-icon',
-            html: `<div style="background-color: #3b82f6; width: 16px; height: 16px; border: 2px solid white; border-radius: 50%; box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);"></div>`,
-            iconSize: [16, 16],
-            iconAnchor: [8, 8]
-        });
-
-        const targetIcon = L.divIcon({
-            className: 'target-icon',
-            html: `<div style="background-color: #ef4444; width: 14px; height: 14px; border: 2px solid white; transform: rotate(45deg); box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);"></div>`,
-            iconSize: [14, 14],
-            iconAnchor: [7, 7]
-        });
-
-        // Default View
-        window.map = L.map('tactical-map-container', {
+        window.map = L.map(container, {
             zoomControl: false,
-            attributionControl: false
-        }).setView([37.0902, -95.7129], 4);
+            attributionControl: false,
+            trackResize: false, // Handled by ResizeObserver
+            scrollWheelZoom: true
+        }).setView([31.9496, -102.1701], 16);
 
-        // Add Esri Satellite Tiles
-        if (L.esri) {
-            L.esri.basemapLayer('Imagery').addTo(window.map);
-            L.esri.basemapLayer('ImageryLabels').addTo(window.map);
-        } else {
-            // Fallback to OSM
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { maxZoom: 19 }).addTo(window.map);
-        }
-
-        // Add Zoom Control
-        L.control.zoom({
-            position: 'topright'
+        // ── Google Satellite Layer ─────────────────────────────────────────
+        L.tileLayer('https://mt0.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
+            maxZoom: 20,
+            subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
         }).addTo(window.map);
 
-        // Add Shooter Marker
-        console.log("[MAP_LOGIC] Adding Shooter Marker...");
-        window.shooterMarker = L.marker(window.map.getCenter(), {
-            icon: shooterIcon,
-            draggable: true,
-            zIndexOffset: 1000
-        }).addTo(window.map);
+        L.control.zoom({ position: 'topright' }).addTo(window.map);
 
-        // Events
-        window.shooterMarker.on('drag', function (e) { updateRangeLines(); });
-        window.shooterMarker.on('dragend', function (e) { updateRangeLines(); });
-        window.map.on('click', function (e) { addTargetMarker(e.latlng, targetIcon); });
+        // ── Resize Observer ────────────────────────────────────────────────
+        _mapResizeObserver = new ResizeObserver(() => {
+            if (window.map) window.refreshMapSize();
+        });
+        _mapResizeObserver.observe(container);
 
-        // Locate
-        window.map.locate({ setView: true, maxZoom: 18 });
-        window.map.on('locationfound', function (e) {
-            window.shooterMarker.setLatLng(e.latlng);
+        // ── Intersection Observer (High Reliability Visibility) ─────────────
+        const visibilityObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting && entry.intersectionRatio > 0.5) {
+                    console.log("[MAP] High-confidence visibility, refreshing...");
+                    // Give it a moment to finish any CSS transitions
+                    setTimeout(() => {
+                        _shoveMapSize();
+                        window.refreshMapSize();
+                    }, 50);
+                }
+            });
+        }, { threshold: [0, 0.5, 1.0] });
+        visibilityObserver.observe(container);
+
+        // ── Interaction Logic ──────────────────────────────────────────────
+        window.map.on('click', function (e) {
+            _handleMapClick(e.latlng);
         });
 
-        console.log("[MAP_LOGIC] Map Initialized Successfully.");
+        _updateRangeLines();
+        _attachGPSOverlay(container);
+
+        // Final triggers
+        _shoveMapSize(2500);
+        _mapInitialized = true;
+        _mapInitializing = false;
+
+        // Industrial Strength: Trigger global resize event
+        window.dispatchEvent(new Event('resize'));
 
     } catch (err) {
-        console.error("[MAP_LOGIC] CRITICAL ERROR:", err);
-        // Log to debug overlay if exists
-        const dbg = document.getElementById('map-debug-overlay');
-        if (dbg) dbg.innerHTML += `<div class="text-red-500 font-bold">ERROR: ${err.message}</div>`;
-    }
-};
-
-// Force resize fix when tab is opened
-// Force resize fix when tab is opened
-window.refreshMapSize = function () {
-    if (window.map) {
-        setTimeout(() => {
-            window.map.invalidateSize();
-        }, 300);
+        _mapInitializing = false;
+        console.error('[MAP] Initialization failed:', err);
     }
 }
 
-function addTargetMarker(latlng, iconObj) {
-    if (!iconObj) {
-        // Fallback if not passed
-        iconObj = L.divIcon({
-            className: 'target-icon',
-            html: `<div style="background-color: #ef4444; width: 14px; height: 14px; border: 2px solid white; transform: rotate(45deg); box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);"></div>`,
-            iconSize: [14, 14],
-            iconAnchor: [7, 7]
-        });
-    }
-
-    const marker = L.marker(latlng, {
-        icon: iconObj,
-        draggable: true
-    }).addTo(window.map);
-
-    // Remove on click
-    marker.on('click', function () {
-        window.map.removeLayer(marker);
-        window.targetMarkers = window.targetMarkers.filter(m => m !== marker);
-        updateRangeLines();
-    });
-
-    marker.on('drag', function () {
-        updateRangeLines();
-    });
-
-    window.targetMarkers.push(marker);
-    updateRangeLines();
-}
-
-window.toggleMapPathMode = function () {
-    mapPathMode = !mapPathMode;
-    const btn = document.getElementById('btn-map-link');
-    if (btn) {
-        if (mapPathMode) {
-            btn.innerHTML = `<i data-lucide="link" class="w-3 h-3"></i> CHAIN`;
-            btn.classList.remove('bg-zinc-800', 'text-zinc-400');
-            btn.classList.add('bg-blue-600', 'text-white');
-            window.showToast("Mode: CHAIN (Target to Target)");
-        } else {
-            btn.innerHTML = `<i data-lucide="circle-dot" class="w-3 h-3"></i> RADIAL`;
-            btn.classList.add('bg-zinc-800', 'text-zinc-400');
-            btn.classList.remove('bg-blue-600', 'text-white');
-            window.showToast("Mode: RADIAL (Shooter to All)");
-        }
-        if (window.lucide) window.lucide.createIcons();
-    }
-    updateRangeLines();
-};
-
-function updateRangeLines() {
-    if (!window.shooterMarker) return;
-
-    // Clear old lines
-    window.rangeLines.forEach(line => window.map.removeLayer(line));
-    window.rangeLines = [];
-
-    const shooterPos = window.shooterMarker.getLatLng();
-    let previousPos = shooterPos; // Start chain at shooter
-
-    window.targetMarkers.forEach((target, index) => {
-        const targetPos = target.getLatLng();
-
-        // Determine Start Point based on Mode
-        let startPos;
-        if (mapPathMode) {
-            startPos = previousPos; // Chain: T(i-1) -> T(i)
-        } else {
-            startPos = shooterPos;  // Radial: Shooter -> T(i)
-        }
-
-        // Calculate Distance
-        // Leaflet distanceTo returns Meters
-        const distMeters = startPos.distanceTo(targetPos);
-        const distYards = distMeters * 1.09361;
-
-        const displayDist = useMeters ? distMeters : distYards;
-        const unitLabel = useMeters ? 'm' : 'y';
-
-        // Calculate Ballistics
-        let holdStr = "";
-        if (window.BallisticEngine && window.getTacticalContext) {
-            const context = window.getTacticalContext('smart'); // Pulls from OWC inputs automatically
-            const range = useMeters ? distMeters : distYards;
-
-            // Calculate Solution
-            const solution = window.BallisticEngine.calculate(context.profile, context.weather, range);
-
-            // Format: 1.2U 0.4R
-            const elev = parseFloat(solution.elevMil);
-            const wind = parseFloat(solution.windMil);
-            const eDir = elev >= 0 ? "U" : "D";
-            const wDir = wind >= 0 ? "R" : "L"; // Simplified wind assumption or just magnitude
-
-            // We need to know wind direction relative to shot, but for now let's just show the raw solution 
-            // or if the engine handles relative wind, use that.
-            // updateOWC handles relative wind logic.
-            // For map, we might need to be smarter, but let's start with basic Holds.
-
-            holdStr = ` <span class="text-blue-300 font-bold">| ${Math.abs(elev).toFixed(1)}${eDir}</span>`;
-        }
-
-        // Draw Line
-        const line = L.polyline([startPos, targetPos], {
-            color: 'white',
-            weight: 2,
-            opacity: 0.8,
-            dashArray: '5, 10'
+// ── Click Logic: 1st click = Shooter, 2nd+ = Target ─────────────────────────
+function _handleMapClick(latlng) {
+    if (!window.shooterMarker) {
+        // Place Firing Position
+        console.log("[MAP] Setting Firing Position (Shooter)");
+        window.shooterMarker = L.marker(latlng, {
+            icon: _makeShooterIcon(), draggable: true, zIndexOffset: 1000
+        }).addTo(window.map);
+        window.shooterMarker.on('drag dragend', _updateRangeLines);
+    } else {
+        // Place Target
+        console.log("[MAP] Adding Target Position");
+        const marker = L.marker(latlng, {
+            icon: _makeTargetIcon(), draggable: true
         }).addTo(window.map);
 
-        // Add Tooltip (Permanent Label)
-        line.bindTooltip(`${displayDist.toFixed(1)}${unitLabel}${holdStr}`, {
-            permanent: true,
-            direction: 'center',
-            className: 'range-label'
+        marker.on('click', function () {
+            window.map.removeLayer(marker);
+            window.targetMarkers = window.targetMarkers.filter(m => m !== marker);
+            _updateRangeLines();
+        });
+
+        marker.on('drag dragend', _updateRangeLines);
+        window.targetMarkers.push(marker);
+    }
+    _updateRangeLines();
+}
+
+// ── Range Calculation & Display ──────────────────────────────────────────────
+function _updateRangeLines() {
+    if (!window.map) return;
+
+    // Clear old lines
+    window.rangeLines.forEach(line => { try { window.map.removeLayer(line); } catch (e) { } });
+    window.rangeLines = [];
+
+    const distEl = document.getElementById('map-dist-val');
+    if (!window.shooterMarker) {
+        if (distEl) distEl.innerHTML = `<span class="text-blue-400 animate-pulse">TAP MAP TO SET FIRING POSITION</span>`;
+        return;
+    }
+
+    if (window.targetMarkers.length === 0) {
+        if (distEl) distEl.innerHTML = `<span class="text-red-400">TAP MAP TO DROP TARGETS</span>`;
+        return;
+    }
+
+    const shooterPos = window.shooterMarker.getLatLng();
+    let totalDistYds = 0;
+    let prevPos = shooterPos;
+
+    window.targetMarkers.forEach((tgt, idx) => {
+        const tgtPos = tgt.getLatLng();
+        const fromPos = _mapPathMode ? prevPos : shooterPos;
+
+        const distM = fromPos.distanceTo(tgtPos);
+        const distYds = distM * 1.09361;
+        const distDisplay = _mapUseMeters ? distM : distYds;
+        const unit = _mapUseMeters ? 'm' : 'y';
+        totalDistYds += distYds;
+
+        const line = L.polyline([fromPos, tgtPos], {
+            color: '#fff', weight: 2, dashArray: '5, 8', opacity: 0.7
+        }).addTo(window.map);
+
+        line.bindTooltip(`T${idx + 1}: ${distDisplay.toFixed(0)}${unit}`, {
+            permanent: true, direction: 'center', className: 'range-label'
         }).openTooltip();
 
         window.rangeLines.push(line);
-        previousPos = targetPos; // Update for next link in chain
+        prevPos = tgtPos;
     });
 
-    // Update Layout UI value (showing last segment)
-    if (window.targetMarkers.length > 0 && window.rangeLines.length > 0) {
-        // Just show "Active" or count
-        const distDisplay = document.getElementById('map-dist-val');
-        if (distDisplay) {
-            distDisplay.innerHTML = `${window.targetMarkers.length} <span class="text-xs text-blue-500">TGTs</span>`;
+    if (distEl) {
+        const totalVal = _mapUseMeters ? (totalDistYds / 1.09361) : totalDistYds;
+        const totalUnit = _mapUseMeters ? 'METERS' : 'YDS';
+        distEl.innerHTML = `${window.targetMarkers.length} TGT &nbsp; ${Math.round(totalVal)} <span class="text-blue-500 text-[10px]">${totalUnit}</span>`;
+    }
+}
+
+// ── Sizing System ────────────────────────────────────────────────────────────
+window.refreshMapSize = function () {
+    if (!window.map) return;
+
+    // Check if container is actually visible before refreshing
+    const container = window.map.getContainer();
+    if (container && container.offsetParent !== null) {
+        // Hard refresh: Invalidate and slightly nudge the view to force tile reload
+        const c = window.map.getCenter();
+        window.map.invalidateSize({ animate: false, pan: false });
+        window.map.setView(c, window.map.getZoom(), { animate: false });
+
+        // Update markers
+        if (window.shooterMarker) window.shooterMarker.update();
+        if (window.targetMarkers) {
+            window.targetMarkers.forEach(t => {
+                if (t && typeof t.update === 'function') t.update();
+            });
         }
+        _updateRangeLines();
     }
+};
+
+// ── GPS Overlay Integration ──────────────────────────────────────────────────
+function _attachGPSOverlay(container) {
+    if (document.getElementById('map-gps-overlay')) return;
+
+    const overlay = document.createElement('div');
+    overlay.id = 'map-gps-overlay';
+    overlay.style.cssText = `
+        position:absolute;inset:0;z-index:500;
+        display:flex;flex-direction:column;align-items:center;justify-content:center;
+        background:rgba(0,0,0,0.7);backdrop-filter:blur(4px);
+    `;
+
+    overlay.innerHTML = `
+        <div style="background:#0f172a;border:1px solid #334155;border-radius:12px;padding:24px;text-align:center;max-width:280px;box-shadow:0 10px 40px rgba(0,0,0,0.5);">
+            <div style="font-size:28px;margin-bottom:12px;">📡</div>
+            <p style="color:#f1f5f9;font-weight:900;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:4px;">Google Satellite Live</p>
+            <p style="color:#94a3b8;font-size:10px;margin-bottom:20px;">Use GPS to auto-center firing position?</p>
+            <button id="map-gps-btn" style="background:#2563eb;color:#fff;font-weight:900;font-size:11px;padding:12px 20px;border-radius:6px;border:none;cursor:pointer;width:100%;text-transform:uppercase;" onclick="window.requestMapLocation()">Authorize GPS</button>
+            <button style="margin-top:12px;color:#64748b;font-size:10px;background:none;border:none;cursor:pointer;text-decoration:underline;" onclick="document.getElementById('map-gps-overlay').style.display='none'">Manual Placement Only</button>
+        </div>
+    `;
+    container.appendChild(overlay);
+
+    window.requestMapLocation = function () {
+        const btn = document.getElementById('map-gps-btn');
+        if (btn) btn.textContent = 'LINKING TO SATELLITE...';
+
+        window.map.locate({ setView: true, maxZoom: 18, timeout: 10000 });
+    };
+
+    window.map.on('locationfound', function (e) {
+        document.getElementById('map-gps-overlay').style.display = 'none';
+        if (!window.shooterMarker) {
+            window.shooterMarker = L.marker(e.latlng, { icon: _makeShooterIcon(), draggable: true, zIndexOffset: 1000 }).addTo(window.map);
+            window.shooterMarker.on('drag dragend', _updateRangeLines);
+        } else {
+            window.shooterMarker.setLatLng(e.latlng);
+        }
+        window.map.setView(e.latlng, 18);
+        _updateRangeLines();
+    });
+
+    window.map.on('locationerror', () => {
+        const btn = document.getElementById('map-gps-btn');
+        if (btn) btn.textContent = 'GPS DENIED / RETRY';
+    });
 }
 
-
-window.toggleMapUnits = function () {
-    useMeters = !useMeters;
-    updateRangeLines();
-    // Update button text if we had one
-}
-
-window.clearMapTargets = function () {
-    window.targetMarkers.forEach(m => window.map.removeLayer(m));
+// ── Public API (Buttons) ─────────────────────────────────────────────────────
+window.toggleMapUnits = () => { _mapUseMeters = !_mapUseMeters; _updateRangeLines(); };
+window.clearMapTargets = () => {
+    window.targetMarkers.forEach(m => { try { window.map.removeLayer(m); } catch (e) { } });
     window.targetMarkers = [];
-    updateRangeLines();
-
-    // Reset Display
-    const distDisplay = document.getElementById('map-dist-val');
-    if (distDisplay) {
-        distDisplay.innerHTML = `0.0 <span class="text-xs text-blue-500">${useMeters ? 'METERS' : 'YDS'}</span>`;
+    _updateRangeLines();
+};
+window.toggleMapPathMode = () => {
+    _mapPathMode = !_mapPathMode;
+    const btn = document.getElementById('btn-map-link');
+    if (btn) btn.innerHTML = _mapPathMode ? '<i data-lucide="link" class="w-3 h-3"></i> CHAIN' : '<i data-lucide="circle-dot" class="w-3 h-3"></i> RADIAL';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    _updateRangeLines();
+};
+window.syncMapRange = () => {
+    const distEl = document.getElementById('map-dist-val');
+    const match = distEl?.textContent.match(/\d+/);
+    const val = match ? parseInt(match[0]) : 0;
+    if (val > 0) {
+        const input = document.getElementById('owc-range');
+        if (input) { input.value = val; if (typeof window.updateOWC === 'function') window.updateOWC(); }
     }
-}
-
-// Attach to global scope for reset button
-window.tacticalMapHardReset = function () {
-    if (window.map) {
-        window.map.remove();
-        window.map = null;
-        window.targetMarkers = [];
-        window.rangeLines = [];
-    }
-    // Watchdog will pick it up, or we call it directly
-    if (window.initSatelliteMap) window.initSatelliteMap(true);
-}
+};
+window.tacticalMapHardReset = () => window.initTacticalMap(true);
+function _showMapError(c, m) { console.error("[MAP] Critical failure:", m); }
