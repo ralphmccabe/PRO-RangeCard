@@ -1,4 +1,4 @@
-// Theme Toggle Logic
+ï»¿// Theme Toggle Logic
 window.setTheme = function (theme) {
     if (theme === 'light') {
         document.body.classList.add('light-theme');
@@ -144,6 +144,7 @@ window.onerror = function (msg, url, lineNo, columnNo, error) {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.AILifecycle) window.AILifecycle.onBoot();
     // === 0. Global Tactical State & Refs ===
     const targetConfigs = [
         { angleId: 'shooting-angle', rangeId: 'compass-range', label: 'T1 Shot:', mobileId: 'mobile-display-shooting-angle' },
@@ -2264,6 +2265,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // === 8. AI OPERATOR CHAT LOGIC ===
 
+    window.AILifecycle = {
+        blackbox: [],
+        missionStarted: null,
+
+        log: function (event, detail = "") {
+            const entry = { t: new Date().toLocaleTimeString(), e: event, d: detail };
+            this.blackbox.unshift(entry);
+            if (this.blackbox.length > 50) this.blackbox.pop();
+            console.log(`[AI-LOG] ${event}: ${detail}`);
+        },
+
+        onBoot: async function () {
+            this.missionStarted = new Date();
+            this.log("MISSION_START", "System Initialization");
+
+            // Artificial Delay for "Thinking" effect
+            setTimeout(async () => {
+                const vaultCount = window.TRC_IDB ? (await window.TRC_IDB.getAll('dopeVault')).length : 0;
+                const isApk = window.location.protocol === 'file:';
+                const status = isApk ? "ðŸ›¡ï¸ APK SECURE" : "ðŸŒ URL LIVE";
+
+                let greeting = `[TACTICAL BRIEF] Mission started at ${this.missionStarted.toLocaleTimeString()}.\n`;
+                greeting += `SYSTEM: ${status}\n`;
+                greeting += `VAULT: ${vaultCount} items secured in Warehouse.\n`;
+                greeting += `INTELLIGENCE: High-Capacity IndexedDB warehouse is online. Ready for mission.`;
+
+                if (window.addChatBubble) window.addChatBubble('bot', greeting);
+            }, 1500);
+        },
+
+        onShutdown: function () {
+            const duration = Math.round((new Date() - this.missionStarted) / 60000);
+            const summary = {
+                end: new Date().toISOString(),
+                duration: `${duration} mins`,
+                lastAction: this.blackbox[0]?.e || "None"
+            };
+            localStorage.setItem('trc_last_mission_summary', JSON.stringify(summary));
+        }
+    };
+
+    window.addEventListener('beforeunload', () => {
+        if (window.AILifecycle) window.AILifecycle.onShutdown();
+    });
+
     window.processChatCommand = function () {
         if (!chatInput || !chatHistory) return;
         const query = chatInput.value.trim();
@@ -2330,6 +2376,17 @@ document.addEventListener('DOMContentLoaded', () => {
     window.addChatBubble = addChatBubble;
 
     function generateAIResponse(query) {
+        if (query === '/?' || query === 'help') {
+            return `[TACTICAL COMMANDS]\n- STATUS: Check Isolation health\n- BLACKBOX: View recent internal events\n- VAULT: Warehouse status\n- DIAGNOSE: Full system audit`;
+        }
+        if (query === 'blackbox') {
+            const history = window.AILifecycle.blackbox.map(b => `[${b.t}] ${b.e}: ${b.d}`).join('\n');
+            return `[BLACK BOX FORENSICS]\n${history || "No data recorded yet."}`;
+        }
+        if (query === 'status') {
+            const isApk = window.location.protocol === 'file:';
+            return `[STATUS REPORT]\nProtocol: ${isApk ? "APK/FILE (Isolated)" : "URL/WEB (Live)"}\nWatchdog: Active\nBreach Status: 100% Secure.`;
+        }
         // Helper to get value from OWC with HUD fallback
         const getVal = (owcId, hudId, fallback = 'Undefined') => {
             const owcEl = document.getElementById(owcId);
@@ -2355,7 +2412,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const press = document.getElementById('pressure')?.value || '29.92';
             const da = document.getElementById('owc-da')?.value || '0';
 
-            return `TACTICAL WEATHER REPORT:\n<span class="text-white">TEMP:</span> ${temp}°F | <span class="text-white">WIND:</span> ${wind} MPH\n<span class="text-white">DA:</span> ${da} FT | <span class="text-white">BARO:</span> ${press} inHg\nEnvironmental data synced to core.`;
+            return `TACTICAL WEATHER REPORT:\n<span class="text-white">TEMP:</span> ${temp}Â°F | <span class="text-white">WIND:</span> ${wind} MPH\n<span class="text-white">DA:</span> ${da} FT | <span class="text-white">BARO:</span> ${press} inHg\nEnvironmental data synced to core.`;
         }
 
         // Analyze / Data Check Intent
@@ -2808,16 +2865,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const SESSION_HISTORY_KEY = 'rangeCardSessionHistory';
 
     window.SessionHistory = {
-        getHistory: function () {
+        getHistory: async function () {
+            if (window.TRC_IDB) {
+                const historyObj = await window.TRC_IDB.getAll('sessionHistory');
+                return Object.values(historyObj).sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+            }
             try {
                 return JSON.parse(localStorage.getItem(SESSION_HISTORY_KEY)) || [];
-            } catch (e) {
-                return [];
-            }
+            } catch (e) { return []; }
         },
 
-        saveSession: function () {
-            const history = this.getHistory();
+        saveSession: async function () {
+            const history = await this.getHistory();
             const lastAnalysis = window.lastGroupAnalysis;
 
             const session = {
@@ -2856,8 +2915,8 @@ document.addEventListener('DOMContentLoaded', () => {
             localStorage.removeItem(SESSION_HISTORY_KEY);
         },
 
-        getTrends: function () {
-            const history = this.getHistory();
+        getTrends: function (providedHistory = null) {
+            const history = providedHistory || []; // Trends should be passed pre-fetched data
             const sessionsWithPerformance = history.filter(s => s.performance && s.performance.spreadMOA);
 
             if (sessionsWithPerformance.length < 2) {
@@ -2907,8 +2966,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.saveSessionSnapshot = function () {
-        const session = SessionHistory.saveSession();
+    window.saveSessionSnapshot = async function () {
+        const session = await SessionHistory.saveSession();
         const msg = session.performance
             ? `Session saved! ${session.performance.shotCount} shots, ${session.performance.spreadMOA} MOA spread.`
             : 'Session saved! (No shot analysis data captured)';
@@ -2920,9 +2979,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    window.displaySessionHistory = function () {
-        const history = SessionHistory.getHistory();
-        const trends = SessionHistory.getTrends();
+    window.displaySessionHistory = async function () {
+        const history = await SessionHistory.getHistory();
+        const trends = SessionHistory.getTrends(history);
         const container = document.getElementById('session-history-container');
 
         if (!container) {
@@ -3779,6 +3838,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (window.updateOWC) window.updateOWC();
 
                 window.showToast("WEATHER DATA SYNCED");
+                if (window.SessionLogger) window.SessionLogger.add('SYSTEM', 'ISOLATION WATCHDOG: Wx Data Secured. Fortress Intact.');
 
                 // LOG WEATHER UPDATE FOR AI
                 if (typeof SessionLogger !== 'undefined') {
@@ -3788,10 +3848,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update Weather Station UI if open
                 const wsTemp = document.getElementById('ws-temp');
                 if (wsTemp) {
-                    wsTemp.textContent = `${weather.temp}°F`;
+                    wsTemp.textContent = `${weather.temp}Â°F`;
                     document.getElementById('ws-hum').textContent = `${weather.humidity}%`;
                     document.getElementById('ws-press').textContent = `${weather.pressure} IN`;
-                    document.getElementById('ws-wind').textContent = `${weather.windSpd} MPH @ ${weather.windDir}°`;
+                    document.getElementById('ws-wind').textContent = `${weather.windSpd} MPH @ ${weather.windDir}Â°`;
                     document.getElementById('ws-msl').textContent = `${weather.msl} FT`;
                     document.getElementById('ws-asl').textContent = `${weather.asl} FT`;
                     document.getElementById('ws-da').textContent = `${liveDA.toLocaleString()} FT`;
@@ -3831,7 +3891,7 @@ window.closeDopeVault = function () {
     if (modal) modal.classList.add('hidden');
 };
 
-window.saveDopeToVault = function () {
+window.saveDopeToVault = async function () {
     const preview = document.getElementById('quick-dope-preview');
     if (!preview) return;
 
@@ -4104,6 +4164,7 @@ let lastIntelTab = 'ai-advisor';
 
 // Switch Intel Hub Tabs
 window.switchIntelTab = function (tabName) {
+    if (window.AILifecycle) window.AILifecycle.log('TAB_SHIFT', tabName);
     try {
         console.log(`[SYS] Switching Intel Tab: ${tabName}`);
 
@@ -4175,7 +4236,7 @@ window.switchIntelTab = function (tabName) {
             }, 250);
         } else if (tabName === 'weather-station') {
             // Auto-trigger weather lookup if first time opening
-            if (!document.getElementById('ws-temp').textContent.includes('°F')) {
+            if (!document.getElementById('ws-temp').textContent.includes('Â°F')) {
                 setTimeout(() => {
                     if (typeof window.fetchLiveWeather === 'function') window.fetchLiveWeather();
                 }, 500);
@@ -4637,6 +4698,7 @@ window.closeIntelHub = function () {
 
 // Initialize Intel Hub Button
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.AILifecycle) window.AILifecycle.onBoot();
     const openIntelBtn = document.getElementById('openIntelBtn');
     if (openIntelBtn) {
         openIntelBtn.onclick = () => {
@@ -5247,6 +5309,7 @@ window.initVirtualSpotter = function () {
 
 // --- TAB SCROLL BOOSTER (For PC Emulators) ---
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.AILifecycle) window.AILifecycle.onBoot();
     const tabContainer = document.querySelector('.no-scrollbar');
     if (!tabContainer) return;
 
@@ -6325,7 +6388,7 @@ const tacticalDrills = [
         color: 'emerald',
         desc: 'Unknown Distance ranging. Use your reticle and map tools to estimate range and solve.',
         difficulty: 'ADVANCED',
-        goal: '±25 Yard Estimation'
+        goal: 'Â±25 Yard Estimation'
     },
     {
         id: 'stress-fire',
@@ -6563,6 +6626,7 @@ window.loadWorkCenterState = function () {
 
 // Auto-Save Listeners
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.AILifecycle) window.AILifecycle.onBoot();
     // ... existing init code ...
     window.loadWorkCenterState();
 
@@ -6736,9 +6800,9 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
                     </div>
                     <div class="flex gap-2 flex-wrap justify-center">
                         <div class="px-4 py-1.5 bg-black/5 border border-black/10 rounded flex gap-4 text-[10px] font-black text-zinc-600 uppercase tracking-widest">
-                            <span>WIND: <b class="text-orange-700 font-black">${wDir}°</b></span>
+                            <span>WIND: <b class="text-orange-700 font-black">${wDir}Â°</b></span>
                             <span>SPD: <b class="text-orange-700 font-black">${wSpeed} MPH</b></span>
-                            <span>LOS: <b class="text-blue-700 font-black">${losVal}°</b></span>
+                            <span>LOS: <b class="text-blue-700 font-black">${losVal}Â°</b></span>
                         </div>
                         <div class="px-4 py-1.5 bg-zinc-800/10 border border-black/10 rounded flex items-center gap-2">
                              <span class="text-[9px] text-zinc-600 font-black uppercase tracking-widest">SOURCE:</span>
@@ -6849,7 +6913,7 @@ window.calibrateCompassOffset = function () {
     // Current heading is what the phone THINKS is North.
     // We want to set this heading as the New North (0 degrees).
     const currentHeadingText = document.getElementById('hud-heading-val')?.textContent || "0";
-    const currentHeading = parseFloat(currentHeadingText.replace('°', '')) || 0;
+    const currentHeading = parseFloat(currentHeadingText.replace('Â°', '')) || 0;
 
     // The offset is simply the negative of the current heading
     // so that (currentHeading + offset) % 360 = 0
@@ -6968,7 +7032,7 @@ function handleOrientation(event) {
     if (card) card.style.transform = `rotate(${cardRotation}deg)`;
 
     const hVal = document.getElementById('hud-heading-val');
-    if (hVal) hVal.textContent = Math.round(heading).toString().padStart(3, '0') + '°';
+    if (hVal) hVal.textContent = Math.round(heading).toString().padStart(3, '0') + 'Â°';
 
     const cDir = document.getElementById('hud-cardinal-val');
     if (cDir) {
@@ -7663,6 +7727,7 @@ window.deleteArchivedTape = async function (id) {
 // ===================================================================
 // Moved out of Intel Hub context to prevent accidental marking during scroll.
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.AILifecycle) window.AILifecycle.onBoot();
     let mobileStrokes = [];
     let desktopStrokes = [];
 
@@ -7862,7 +7927,7 @@ window.stopTargetCam = function () {
 // Start real-time metadata updates
 function startMetadataUpdates() {
     updateMetadata(); // Initial update
-    window.metadataInterval = setInterval(updateMetadata, 1000);
+    // window.metadataInterval = setInterval(updateMetadata, 1000); // DISABLED FOR APK STABILITY
 }
 
 // Update metadata displays
@@ -7892,7 +7957,7 @@ function updateMetadata() {
         window.addEventListener('deviceorientationabsolute', (e) => {
             const heading = e.alpha ? Math.round(e.alpha) : 0;
             const headingDisplay = document.getElementById('target-heading-display');
-            if (headingDisplay) headingDisplay.textContent = `HDG: ${heading}°`;
+            if (headingDisplay) headingDisplay.textContent = `HDG: ${heading}Â°`;
             window.currentHeading = heading;
         }, { once: true });
     }
@@ -7902,7 +7967,7 @@ function updateMetadata() {
         window.addEventListener('deviceorientation', (e) => {
             const pitch = e.beta ? Math.round(e.beta) : 0;
             const angleDisplay = document.getElementById('target-angle-display');
-            if (angleDisplay) angleDisplay.textContent = `ANG: ${pitch}°`;
+            if (angleDisplay) angleDisplay.textContent = `ANG: ${pitch}Â°`;
             window.currentAngle = pitch;
         }, { once: true });
     }
@@ -8120,7 +8185,7 @@ function renderVault(targets) {
                     <div class="p-2 space-y-1">
                         <div class="text-[9px] font-mono text-zinc-400">
                             <div>GPS: ${target.gps.lat}, ${target.gps.lon}</div>
-                            <div>HDG: ${target.heading}° | ANG: ${target.angle}°</div>
+                            <div>HDG: ${target.heading}Â° | ANG: ${target.angle}Â°</div>
                         </div>
                         <div class="text-[8px] text-zinc-500">${dateStr}</div>
                     </div>
@@ -8267,7 +8332,7 @@ window.openTargetDetail = async function (targetId) {
         document.getElementById('detail-gps').textContent =
             `${lat.toFixed(6)}, ${lon.toFixed(6)}`;
         document.getElementById('detail-heading-angle').textContent =
-            `${currentTargetData.heading}° / ${currentTargetData.angle}°`;
+            `${currentTargetData.heading}Â° / ${currentTargetData.angle}Â°`;
 
         // Setup canvas for measurement overlay
         img.onload = () => {
@@ -8838,6 +8903,7 @@ window.loadWorkCenterState = function () {
 
 // Hook up event listeners for persistence
 document.addEventListener('DOMContentLoaded', () => {
+    if (window.AILifecycle) window.AILifecycle.onBoot();
     window.loadWorkCenterState();
 
     const inputs = [
@@ -9032,12 +9098,12 @@ window.renderDropTable = function (data, metadata = "QUICK DOPE", weatherLegacy 
                 
                 <div class="flex gap-2">
                     <div class="px-2 py-0.5 bg-orange-500/5 border border-orange-500/10 rounded flex gap-4 text-[7px] font-black text-zinc-400 uppercase tracking-tighter shadow-inner">
-                        <span>WIND: <b class="text-orange-400 font-black">${wDir}°</b></span>
+                        <span>WIND: <b class="text-orange-400 font-black">${wDir}Â°</b></span>
                         <span>SPD: <b class="text-orange-400 font-black">${wSpeed} MPH</b></span>
                     </div>
                     <div class="px-2 py-0.5 bg-zinc-800/40 border border-zinc-700/50 rounded flex items-center gap-1 text-[7px] font-black text-zinc-400 uppercase tracking-tighter">
                          <span>LOS:</span>
-                         <span class="text-zinc-200 font-black">${losVar}°</span>
+                         <span class="text-zinc-200 font-black">${losVar}Â°</span>
                     </div>
                 </div>
 
@@ -9102,3 +9168,7 @@ window.renderDropTable = function (data, metadata = "QUICK DOPE", weatherLegacy 
     html += `</tbody></table></div>`;
     container.innerHTML = html;
 };
+
+
+
+

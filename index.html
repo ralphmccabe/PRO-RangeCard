@@ -8,33 +8,58 @@
         content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
     <title>Apex Ballistics</title>
     <link rel="manifest" href="manifest.json">
-    <!-- NUCLEAR CLEANUP (DISABLED)
     <script>
-        // NUCLEAR CLEANUP - Forces a fresh start by wiping all Service Workers and Caches
+        /**
+         * AGGRESSIVE ISOLATION KILL SWITCH
+         * Ensures the APK version is 100% isolated from the web.
+         * Wipes all Service Workers and Caches on EVERY load.
+         */
         (async function () {
             try {
-                const PURGE_KEY = 'trc_total_purge_v4.0_stable_final';
-                if (localStorage.getItem(PURGE_KEY)) return;
-
-                console.warn("[NUCLEAR] Stabilizing app: Purging old caches...");
                 if ('serviceWorker' in navigator) {
                     const regs = await navigator.serviceWorker.getRegistrations();
-                    for (let r of regs) await r.unregister();
+                    for (let r of regs) {
+                        console.warn("[ISOLATION] Terminating Service Worker:", r.active?.scriptURL);
+                        await r.unregister();
+                    }
                 }
                 if ('caches' in window) {
                     const keys = await caches.keys();
-                    for (let k of keys) await caches.delete(k);
+                    for (let k of keys) {
+                        console.warn("[ISOLATION] Purging Cache:", k);
+                        await caches.delete(k);
+                    }
+                }
+                // --- ISOLATION WATCHDOG (THE TRAP) ---
+                const badge = document.getElementById('isolation-watchdog');
+                const isApk = window.location.protocol === 'file:';
+
+                if (badge) {
+                    if (isApk) {
+                        badge.textContent = "🛡️ APK SECURE";
+                        badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-blue-500/30 bg-blue-500/10 text-blue-400";
+                    } else {
+                        badge.textContent = "🌐 URL LIVE";
+                        badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-green-500/30 bg-green-500/10 text-green-400";
+                    }
                 }
 
-                localStorage.setItem(PURGE_KEY, 'true');
-                console.log("[NUCLEAR] Cleanup complete. Reloading...");
-                setTimeout(() => window.location.reload(true), 2000); // 2s delay to ensure storage writes
+                // THE TRAP: Listen for any Service Worker trying to take control
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.error("[BREACH] A Service Worker just took control of the app!");
+                        if (badge) {
+                            badge.textContent = "⚠️ ISOLATION BREACH";
+                            badge.className = "ml-auto text-[9px] font-bold px-2 py-0.5 rounded border border-red-500 bg-red-600 text-white animate-pulse shadow-[0_0_15px_rgba(239,68,68,0.5)]";
+                        }
+                        if (window.showToast) window.showToast("ISOLATION BREACH DETECTED", "error");
+                    });
+                }
             } catch (e) {
-                console.error("[NUCLEAR] Cleanup error:", e);
+                console.error("[ISOLATION] Kill switch error:", e);
             }
         })();
     </script>
-    -->
     <script src="tailwind.min.js"></script>
     <link
         href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600;800&display=swap"
@@ -298,9 +323,10 @@
                         <i data-lucide="crosshair" class="w-6 h-6 text-neon-green"></i>
                         <span class="text-neon-green">Range Data</span>
                         <span class="text-sm text-gray-400 italic font-normal normal-case ml-1">ProVersion</span>
-                        <span id="test-isolation-badge"
-                            class="ml-auto text-[10px] bg-blue-500/20 text-blue-400 px-2 py-0.5 rounded border border-blue-500/30 animate-pulse">🧪
-                            URL-ONLY</span>
+                        <span id="isolation-watchdog"
+                            class="ml-auto text-[9px] font-bold px-2 py-0.5 rounded border transition-all duration-500">
+                            CHECKING...
+                        </span>
                     </h1>
                     <!-- Theme Toggle -->
                     <div class="flex items-center gap-1 bg-neutral-700/60 p-1 rounded-lg border border-neutral-600">

@@ -8,7 +8,9 @@ const DB_NAME = 'TRC_PRO_DB';
 const DB_VERSION = 1;
 const STORES = {
     PROFILES: 'rangeCardProfiles',
-    WEAPONS: 'weaponProfiles'
+    WEAPONS: 'weaponProfiles',
+    VAULT: 'dopeVault',
+    HISTORY: 'sessionHistory'
 };
 
 const idb = {
@@ -26,12 +28,10 @@ const idb = {
 
                 request.onupgradeneeded = (event) => {
                     const db = event.target.result;
-                    if (!db.objectStoreNames.contains(STORES.PROFILES)) {
-                        db.createObjectStore(STORES.PROFILES);
-                    }
-                    if (!db.objectStoreNames.contains(STORES.WEAPONS)) {
-                        db.createObjectStore(STORES.WEAPONS);
-                    }
+                    if (!db.objectStoreNames.contains(STORES.PROFILES)) db.createObjectStore(STORES.PROFILES);
+                    if (!db.objectStoreNames.contains(STORES.WEAPONS)) db.createObjectStore(STORES.WEAPONS);
+                    if (!db.objectStoreNames.contains(STORES.VAULT)) db.createObjectStore(STORES.VAULT);
+                    if (!db.objectStoreNames.contains(STORES.HISTORY)) db.createObjectStore(STORES.HISTORY);
                 };
 
                 request.onsuccess = (event) => {
@@ -124,17 +124,45 @@ const idb = {
         if (legacyWeapons) {
             try {
                 const weapons = JSON.parse(legacyWeapons);
-                const count = Object.keys(weapons).length;
-                if (count > 0) {
-                    console.log(`[IDB] Migrating ${count} weapons from LocalStorage...`);
-                    for (const [name, data] of Object.entries(weapons)) {
-                        await this.set(STORES.WEAPONS, name, data);
-                    }
-                    localStorage.removeItem('weaponProfiles');
-                    console.log("[IDB] Weapon migration complete.");
+                for (const [name, data] of Object.entries(weapons)) {
+                    await this.set(STORES.WEAPONS, name, data);
                 }
+                localStorage.removeItem('weaponProfiles');
+                console.log("[IDB] Weapon migration complete.");
             } catch (e) {
                 console.error("[IDB] Weapon migration failed:", e);
+            }
+        }
+
+        // 3. Migrate Dope Vault (Large Images)
+        const legacyVault = localStorage.getItem('trc_dope_vault');
+        if (legacyVault) {
+            try {
+                const vault = JSON.parse(legacyVault);
+                for (const [id, data] of Object.entries(vault)) {
+                    await this.set(STORES.VAULT, id, data);
+                }
+                localStorage.removeItem('trc_dope_vault');
+                console.log("[IDB] Dope Vault migration complete.");
+            } catch (e) {
+                console.error("[IDB] Vault migration failed:", e);
+            }
+        }
+
+        // 4. Migrate Session History
+        const legacyHistory = localStorage.getItem('rangeCardSessionHistory');
+        if (legacyHistory) {
+            try {
+                const history = JSON.parse(legacyHistory);
+                if (Array.isArray(history)) {
+                    for (let i = 0; i < history.length; i++) {
+                        await this.set(STORES.HISTORY, i.toString(), history[i]);
+                    }
+                }
+                localStorage.removeItem('rangeCardSessionHistory');
+                console.log("[IDB] Session History migration complete.");
+            } catch (e) {
+                console.error("[IDB] History migration failed:", e);
             }
         }
     }
