@@ -36,8 +36,11 @@ const idb = {
             };
 
             request.onerror = (event) => {
-                console.error("[IDB] Database error:", event.target.error);
-                reject(event.target.error);
+                const error = event.target.error;
+                console.error("[IDB] Database error:", error);
+                // Also log to a global error collection for debugging
+                window.IDB_CRITICAL_ERROR = error;
+                reject(error);
             };
         });
     },
