@@ -5,14 +5,14 @@ window.setTheme = function (theme) {
     } else {
         document.body.classList.remove('light-theme');
     }
-    localStorage.setItem('theme-preference', theme);
+    window.safeStorage.setItem('theme-preference', theme);
 };
 
 // === Global Utility Functions ===
 
 window.forceAppUpdate = async function () {
     console.log("[CLEANUP] Final cache purge...");
-    localStorage.setItem('trc_hard_refresh_pending', 'true');
+    window.safeStorage.setItem('trc_hard_refresh_pending', 'true');
     if ('serviceWorker' in navigator) {
         const regs = await navigator.serviceWorker.getRegistrations();
         for (let r of regs) await r.unregister();
@@ -119,7 +119,7 @@ window.copyLoadData = function (btn) {
 
 // Initialize Theme on Load
 (function initTheme() {
-    const savedTheme = localStorage.getItem('theme-preference') || 'dark';
+    const savedTheme = window.safeStorage.getItem('theme-preference') || 'dark';
     if (savedTheme === 'light') {
         document.body.classList.add('light-theme');
     }
@@ -503,7 +503,7 @@ document.addEventListener('DOMContentLoaded', () => {
             window.canvasShots[type] = currentShots;
 
             // Persist to localStorage
-            localStorage.setItem(`pending-canvas-shots-${type}`, JSON.stringify(currentShots));
+            window.safeStorage.setItem(`pending-canvas-shots-${type}`, JSON.stringify(currentShots));
 
             window.updateAllCanvases(type);
         });
@@ -515,7 +515,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearBtn.addEventListener('click', (e) => {
                         e.preventDefault();
                         window.canvasShots[type] = [];
-                        localStorage.removeItem(`pending-canvas-shots-${type}`);
+                        window.safeStorage.removeItem(`pending-canvas-shots-${type}`);
                         window.updateAllCanvases(type);
 
                         const resultEl = document.getElementById(`${type}-analysis-result`);
@@ -540,7 +540,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load persisted dots on startup
     ['hold', 'shot'].forEach(type => {
-        const saved = localStorage.getItem(`pending-canvas-shots-${type}`);
+        const saved = window.safeStorage.getItem(`pending-canvas-shots-${type}`);
         if (saved) {
             try {
                 window.canvasShots[type] = JSON.parse(saved);
@@ -819,9 +819,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 // 4. Wipe Storage (Nuke the persistent ghost data)
                 // Use empty object instead of just removing to ensure any simultaneous saves are overridden with 'empty'
-                localStorage.setItem('rangeCardAutoSave', JSON.stringify({}));
-                localStorage.removeItem('mobile-canvas-hold');
-                localStorage.removeItem('mobile-canvas-shot');
+                window.safeStorage.setItem('rangeCardAutoSave', JSON.stringify({}));
+                window.safeStorage.removeItem('mobile-canvas-hold');
+                window.safeStorage.removeItem('mobile-canvas-shot');
 
                 // 5. Clear Canvases (Drawings)
                 ['clear-hold-btn', 'clear-shot-btn', 'clear-pencil', 'clear-map-pencil-btn'].forEach(id => {
@@ -848,8 +848,8 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (window.canvasShots) {
                         window.canvasShots.hold = [];
                         window.canvasShots.shot = [];
-                        localStorage.removeItem('pending-canvas-shots-hold');
-                        localStorage.removeItem('pending-canvas-shots-shot');
+                        window.safeStorage.removeItem('pending-canvas-shots-hold');
+                        window.safeStorage.removeItem('pending-canvas-shots-shot');
                     }
                     if (typeof updateAllCanvases === 'function') {
                         updateAllCanvases('hold');
@@ -1069,8 +1069,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (data.canvasShots) {
             window.canvasShots.hold = data.canvasShots.hold || [];
             window.canvasShots.shot = data.canvasShots.shot || [];
-            localStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots.hold));
-            localStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots.shot));
+            window.safeStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots.hold));
+            window.safeStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots.shot));
             window.updateAllCanvases('hold');
             window.updateAllCanvases('shot');
         }
@@ -1367,7 +1367,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Dynamic button styling based on mode could go here
         }
 
-        localStorage.setItem('compass-theme-preference', mode);
+        window.safeStorage.setItem('compass-theme-preference', mode);
     };
 
     window.cycleCamoTheme = function () {
@@ -1375,7 +1375,7 @@ document.addEventListener('DOMContentLoaded', () => {
             'default', 'amber', 'red', 'green', 'purple', 'cyan', 'white',
             'pink', 'orange', 'snowy', 'desert', 'summer', 'urban'
         ];
-        const current = localStorage.getItem('compass-theme-preference') || 'default';
+        const current = window.safeStorage.getItem('compass-theme-preference') || 'default';
         let nextIndex = themes.indexOf(current) + 1;
         if (nextIndex >= themes.length) nextIndex = 0;
 
@@ -1680,12 +1680,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) lucide.createIcons();
         }
 
-        localStorage.setItem('tacticalFlavorIndex', index);
+        window.safeStorage.setItem('tacticalFlavorIndex', index);
         console.log(`Applied tactical flavor: ${flavor.name}`);
     }
 
     if (colorCycleBtn) {
-        let currentFlavorIndex = parseInt(localStorage.getItem('tacticalFlavorIndex')) || 0;
+        let currentFlavorIndex = parseInt(window.safeStorage.getItem('tacticalFlavorIndex')) || 0;
 
         // Initial apply
         applyFlavor(currentFlavorIndex);
@@ -1696,7 +1696,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
     } else {
         // Fallback for startup if button isn't found immediately
-        const savedIndex = parseInt(localStorage.getItem('tacticalFlavorIndex')) || 0;
+        const savedIndex = parseInt(window.safeStorage.getItem('tacticalFlavorIndex')) || 0;
         applyFlavor(savedIndex);
     }
 
@@ -1720,7 +1720,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // These are better handled by explicit save/export or slower background tasks
 
             try {
-                localStorage.setItem('rangeCardAutoSave', JSON.stringify(formData));
+                window.safeStorage.setItem('rangeCardAutoSave', JSON.stringify(formData));
                 console.log("[SYS] Tactical auto-save synced.");
             } catch (e) {
                 console.warn("Auto-save storage issue:", e);
@@ -1731,7 +1731,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function autoLoadAll() {
         window.isSystemLoading = true;
         console.log("[SYS] Auto-loading tactical data...");
-        const savedData = localStorage.getItem('rangeCardAutoSave');
+        const savedData = window.safeStorage.getItem('rangeCardAutoSave');
         if (savedData) {
             try {
                 const formData = JSON.parse(savedData);
@@ -1794,7 +1794,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (e) {
             console.error("[SYS] IDB Migration failed (likely blocked storage):", e);
-            if (window.showDebug) window.showDebug('NOTICE: Data Storage is currently blocked by browser.');
         }
 
         // 1. Initial Data Load (Ammo, Drills, etc.)
@@ -1909,7 +1908,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isRefreshing && window.canvasShots && window.canvasShots['hold'] && window.canvasShots['hold'].length === 0) {
             // Place center dot for Stable/Reference
             window.canvasShots['hold'].push({ x: 100, y: 100 });
-            localStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots['hold']));
+            window.safeStorage.setItem('pending-canvas-shots-hold', JSON.stringify(window.canvasShots['hold']));
             if (typeof updateAllCanvases === 'function') updateAllCanvases('hold');
         }
 
@@ -1961,7 +1960,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!isRefreshing && window.canvasShots && window.canvasShots['shot'] && window.canvasShots['shot'].length === 0) {
             if (grade === 'MATCH GRADE' || grade === 'ACCEPTABLE') {
                 window.canvasShots['shot'].push({ x: 100, y: 100 });
-                localStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots['shot']));
+                window.safeStorage.setItem('pending-canvas-shots-shot', JSON.stringify(window.canvasShots['shot']));
                 if (typeof updateAllCanvases === 'function') updateAllCanvases('shot');
             }
         }
@@ -2811,7 +2810,7 @@ document.addEventListener('DOMContentLoaded', () => {
     window.SessionHistory = {
         getHistory: function () {
             try {
-                return JSON.parse(localStorage.getItem(SESSION_HISTORY_KEY)) || [];
+                return JSON.parse(window.safeStorage.getItem(SESSION_HISTORY_KEY)) || [];
             } catch (e) {
                 return [];
             }
@@ -2849,12 +2848,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 history.pop();
             }
 
-            localStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(history));
+            window.safeStorage.setItem(SESSION_HISTORY_KEY, JSON.stringify(history));
             return session;
         },
 
         clearHistory: function () {
-            localStorage.removeItem(SESSION_HISTORY_KEY);
+            window.safeStorage.removeItem(SESSION_HISTORY_KEY);
         },
 
         getTrends: function () {
@@ -3125,7 +3124,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             });
 
-            localStorage.setItem(ACTIVE_PROFILE_KEY, searchId.toString());
+            window.safeStorage.setItem(ACTIVE_PROFILE_KEY, searchId.toString());
             addChatBubble('bot', ` Loaded profile: ${profile.name}`);
 
             // Update dropdown selections
@@ -3136,7 +3135,7 @@ document.addEventListener('DOMContentLoaded', () => {
         },
 
         getActive: function () {
-            const val = localStorage.getItem(ACTIVE_PROFILE_KEY);
+            const val = window.safeStorage.getItem(ACTIVE_PROFILE_KEY);
             return val ? parseInt(val) : null;
         },
 
@@ -3410,11 +3409,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // === Tactical Card Model Library ===
-    let currentCardModel = localStorage.getItem('tacticalCardModel') || 'standard';
+    let currentCardModel = window.safeStorage.getItem('tacticalCardModel') || 'standard';
 
     window.setCardModel = function (modelId) {
         currentCardModel = modelId;
-        localStorage.setItem('tacticalCardModel', modelId);
+        window.safeStorage.setItem('tacticalCardModel', modelId);
         syncCardModelUI();
         generateQuickDope();
     };
@@ -3877,7 +3876,7 @@ window.saveDopeToVault = function () {
         const base64Image = canvas.toDataURL('image/jpeg', 0.6);
 
         // 4. Save to LocalStorage
-        const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
+        const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
         const newEntry = {
             id: Date.now(),
             name: dopeName,
@@ -3887,7 +3886,7 @@ window.saveDopeToVault = function () {
 
         try {
             vault.unshift(newEntry); // Newest first
-            localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+            window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
 
             // LOG SESSION ACTION
             if (typeof SessionLogger !== 'undefined') {
@@ -3918,7 +3917,7 @@ window.renderDopeVault = function () {
     const emptyState = document.getElementById('dope-vault-empty');
     if (!container) return;
 
-    const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
+    const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
 
     if (vault.length === 0) {
         container.innerHTML = "";
@@ -3980,9 +3979,9 @@ window.deleteSelectedDope = function () {
 
     if (!confirm(`DELETE ${checkedIds.length} SELECTED DROP CHARTS?`)) return;
 
-    let vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
+    let vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
     vault = vault.filter(i => !checkedIds.includes(i.id));
-    localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+    window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
 
     window.renderDopeVault();
 };
@@ -4046,14 +4045,14 @@ window.viewDopeImage = function (base64) {
 
 window.deleteDope = function (id) {
     if (!confirm("DELETE THIS DROP CHART?")) return;
-    let vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
+    let vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
     vault = vault.filter(i => i.id !== id);
-    localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+    window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
     window.renderDopeVault();
 };
 
 window.exportDope = function (id) {
-    const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
+    const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
     const item = vault.find(i => i.id === id);
     if (!item) return;
 
@@ -4079,7 +4078,7 @@ window.importDope = function () {
             const dopeName = prompt("ENTER NAME FOR IMPORTED IMAGE:", file.name.split('.')[0]);
             if (!dopeName) return;
 
-            const vault = JSON.parse(localStorage.getItem('trc_dope_vault') || '[]');
+            const vault = JSON.parse(window.safeStorage.getItem('trc_dope_vault') || '[]');
             const newEntry = {
                 id: Date.now(),
                 name: dopeName,
@@ -4087,7 +4086,7 @@ window.importDope = function () {
                 image: base64
             };
             vault.unshift(newEntry);
-            localStorage.setItem('trc_dope_vault', JSON.stringify(vault));
+            window.safeStorage.setItem('trc_dope_vault', JSON.stringify(vault));
             window.renderDopeVault();
         };
         reader.readAsDataURL(file);
@@ -4204,18 +4203,18 @@ console.log(">> [SCRIPT_JS] FULL LOAD COMPLETE <<");
 window.scopeCamStream = null;
 window.scopeRotation = 0;
 // --- BORESIGHT ALIGNMENT STATE ---
-window.reticleOffset = JSON.parse(localStorage.getItem('trc_reticle_offset') || '{"x":0,"y":0}');
+window.reticleOffset = JSON.parse(window.safeStorage.getItem('trc_reticle_offset') || '{"x":0,"y":0}');
 
 window.nudgeReticle = function (dx, dy) {
     window.reticleOffset.x += dx;
     window.reticleOffset.y += dy;
-    localStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
+    window.safeStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
     window.applyReticleOffset();
 };
 
 window.resetReticle = function () {
     window.reticleOffset = { x: 0, y: 0 };
-    localStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
+    window.safeStorage.setItem('trc_reticle_offset', JSON.stringify(window.reticleOffset));
     window.applyReticleOffset();
 };
 
@@ -5655,7 +5654,7 @@ window.resetWorkCenter = function () {
     }
 
     // Clear Saved State
-    localStorage.removeItem('trc_owc_state');
+    window.safeStorage.removeItem('trc_owc_state');
 
     console.log("[OWC] Work Center Reset.");
     window.updateOWC();
@@ -5688,8 +5687,8 @@ window.loadAllData = function () {
     console.log("Loading Persistent Data...");
 
     // 1. Load & Migrate Ammo
-    const legacyAmmo = localStorage.getItem('ammoBatches');
-    const proAmmo = localStorage.getItem('trc_ammo_batches');
+    const legacyAmmo = window.safeStorage.getItem('ammoBatches');
+    const proAmmo = window.safeStorage.getItem('trc_ammo_batches');
 
     let batches = [];
     if (proAmmo) {
@@ -5701,7 +5700,7 @@ window.loadAllData = function () {
     window.ammoBatchStore = batches;
 
     // 2. Load Drills
-    const savedDrills = localStorage.getItem('trc_drills');
+    const savedDrills = window.safeStorage.getItem('trc_drills');
     if (savedDrills) {
         window.drillStore = JSON.parse(savedDrills);
     } else {
@@ -5727,9 +5726,9 @@ window.loadAllData = function () {
     });
 
     if (migrated || legacyAmmo) {
-        localStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
+        window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
         // Cleanup legacy after first successful migration
-        if (legacyAmmo) localStorage.removeItem('ammoBatches');
+        if (legacyAmmo) window.safeStorage.removeItem('ammoBatches');
     }
 
     window.renderAmmoLog();
@@ -5742,7 +5741,7 @@ window.renderAmmoLog = function () {
     container.innerHTML = '';
 
     // Standardize on 'trc_ammo_batches'
-    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
+    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
     window.ammoBatchStore = batches;
 
     if (batches.length === 0) {
@@ -5758,7 +5757,7 @@ window.renderAmmoLog = function () {
     }
 
     batches.forEach((batch, index) => {
-        const activeBatchId = localStorage.getItem('trc_active_batch_id');
+        const activeBatchId = window.safeStorage.getItem('trc_active_batch_id');
         const isActive = batch && batch.id && batch.id.toString() === activeBatchId;
 
         const card = document.createElement('div');
@@ -5839,8 +5838,8 @@ window.renderAmmoLog = function () {
     if (window.lucide) lucide.createIcons();
 
     // Save back ensuring IDs are persisted if we generated new ones
-    localStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
-    localStorage.setItem('ammoBatches', JSON.stringify(batches));
+    window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
+    window.safeStorage.setItem('ammoBatches', JSON.stringify(batches));
 };
 
 window.exportAmmoManifestAsImage = function () {
@@ -5887,7 +5886,7 @@ window.exportAmmoManifestAsImage = function () {
 
 
 window.shareAmmoBatchAsImage = function (batchId) {
-    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || '[]');
+    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || '[]');
     const batch = batches.find(b => b.id === batchId);
     if (!batch) return;
 
@@ -5981,9 +5980,9 @@ window.addNewAmmoBatch = function () {
         name, rifle, bullet, type, mv, bc, zero, powder, grains, qty, brass
     };
 
-    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
+    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
     batches.push(newBatch);
-    localStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
+    window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(batches));
     window.ammoBatchStore = batches;
 
     window.renderAmmoLog();
@@ -6043,14 +6042,14 @@ window.saveNewDrill = function (name, desc, par) {
         hits: 0
     };
     window.drillStore.push(newDrill);
-    localStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
+    window.safeStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
     window.renderDrills();
 };
 
 window.deleteDrill = function (id) {
     if (confirm("Delete Drill?")) {
         window.drillStore = window.drillStore.filter(d => d.id !== id);
-        localStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
+        window.safeStorage.setItem('trc_drills', JSON.stringify(window.drillStore));
         window.renderDrills();
     }
 };
@@ -6086,7 +6085,7 @@ window.saveAmmoBatch = function () {
         window.ammoBatchStore.push(newBatch);
     }
 
-    localStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
+    window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
     window.renderAmmoLog();
     document.getElementById('ammo-batch-modal').classList.add('hidden');
 };
@@ -6094,7 +6093,7 @@ window.saveAmmoBatch = function () {
 window.deleteAmmoBatch = function (id) {
     if (confirm("Delete this batch record?")) {
         window.ammoBatchStore = window.ammoBatchStore.filter(b => b.id !== id);
-        localStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
+        window.safeStorage.setItem('trc_ammo_batches', JSON.stringify(window.ammoBatchStore));
         window.renderAmmoLog();
     }
 };
@@ -6105,7 +6104,7 @@ window.loadBatchToSolver = function (id) {
         console.log(`[Ammo] Loading Batch: ${batch.name} to Solver...`);
 
         // 1. Set Active Batch in State
-        localStorage.setItem('trc_active_batch_id', id.toString());
+        window.safeStorage.setItem('trc_active_batch_id', id.toString());
 
         // Standardize values (Fallbacks)
         const mvVal = batch.mv || batch.speed || 2700;
@@ -6473,8 +6472,8 @@ window.getTacticalContext = function (source = 'smart') {
     const hudZero = parseFloat(document.getElementById('owc-zero')?.value) || parseFloat(document.getElementById('zero')?.value) || 100;
     const hudBc = parseFloat(document.getElementById('owc-bc')?.value) || parseFloat(document.getElementById('g1')?.value) || 0.450;
 
-    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
-    const activeBatchId = localStorage.getItem('trc_active_batch_id');
+    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
+    const activeBatchId = window.safeStorage.getItem('trc_active_batch_id');
     const batch = batches.find(b => b.id.toString() === activeBatchId);
 
     // SOURCE LABELING LOGIC
@@ -6523,12 +6522,12 @@ window.saveWorkCenterState = function () {
         alt: document.getElementById('owc-alt')?.value || '',
         slope: document.getElementById('owc-slope')?.value || ''
     };
-    localStorage.setItem('trc_owc_state', JSON.stringify(state));
+    window.safeStorage.setItem('trc_owc_state', JSON.stringify(state));
     // console.log("[OWC] State Saved", state);
 };
 
 window.loadWorkCenterState = function () {
-    const saved = localStorage.getItem('trc_owc_state');
+    const saved = window.safeStorage.getItem('trc_owc_state');
     if (!saved) return;
 
     try {
@@ -6667,7 +6666,7 @@ window.generateQuickDope = function () {
         // 3. Render
         if (typeof window.renderDropTable === 'function') {
             window.renderDropTable(data, context);
-            localStorage.setItem('trc_last_dope', JSON.stringify(data));
+            window.safeStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
         // 4. Log
@@ -6844,7 +6843,7 @@ window.renderDropTable = function (data, headerData = "QUICK DOPE") {
 };
 
 // let compassInitialized = false; // Fixed: Duplicate declaration
-let compassOffset = parseFloat(localStorage.getItem('trc_compass_offset')) || 0;
+let compassOffset = parseFloat(window.safeStorage.getItem('trc_compass_offset')) || 0;
 
 window.calibrateCompassOffset = function () {
     // Current heading is what the phone THINKS is North.
@@ -6857,7 +6856,7 @@ window.calibrateCompassOffset = function () {
     // We adjust the current global offset relative to what the user JUST saw.
     compassOffset = (compassOffset - currentHeading + 720) % 360;
 
-    localStorage.setItem('trc_compass_offset', compassOffset);
+    window.safeStorage.setItem('trc_compass_offset', compassOffset);
 
     // Provide visual feedback
     const btn = event?.currentTarget;
@@ -6877,7 +6876,7 @@ window.calibrateCompassOffset = function () {
 
 window.resetCompassOffset = function () {
     compassOffset = 0;
-    localStorage.removeItem('trc_compass_offset');
+    window.safeStorage.removeItem('trc_compass_offset');
     console.log("[COMPASS] Offset Reset to Factory");
 };
 
@@ -8171,7 +8170,7 @@ let measureEnd = null;
 let currentReticleType = 'box';
 let poiPins = [];
 let isPOITagging = false;
-let cameraFOV = parseFloat(localStorage.getItem('trc_camera_fov')) || 65;
+let cameraFOV = parseFloat(window.safeStorage.getItem('trc_camera_fov')) || 65;
 
 window.calibrateFOV = function (knownSizeIn, distanceYds) {
     if (!measureStart || !measureEnd || !knownSizeIn || !distanceYds) {
@@ -8187,7 +8186,7 @@ window.calibrateFOV = function (knownSizeIn, distanceYds) {
     const dimensionRatio = boxHeight / window.imageHeight;
     cameraFOV = (milReading * 0.0573) / dimensionRatio;
 
-    localStorage.setItem('trc_camera_fov', cameraFOV);
+    window.safeStorage.setItem('trc_camera_fov', cameraFOV);
     console.log("[TARGET] FOV Calibrated to:", cameraFOV);
     calculateMilMoa();
 };
@@ -8696,13 +8695,13 @@ function initPersistence() {
     inputs.forEach(id => {
         const el = document.getElementById(id);
         if (el) {
-            const saved = localStorage.getItem('trc_save_' + id);
+            const saved = window.safeStorage.getItem('trc_save_' + id);
             if (saved !== null) {
                 el.value = saved;
             }
 
             el.addEventListener('input', (e) => {
-                localStorage.setItem('trc_save_' + id, e.target.value);
+                window.safeStorage.setItem('trc_save_' + id, e.target.value);
             });
         }
     });
@@ -8771,11 +8770,11 @@ window.saveWorkCenterState = function () {
         atmosMode: window.owcAtmosMode,
         liveSync: window.owcLiveSync
     };
-    localStorage.setItem('trc_owc_state', JSON.stringify(state));
+    window.safeStorage.setItem('trc_owc_state', JSON.stringify(state));
 };
 
 window.loadWorkCenterState = function () {
-    const saved = localStorage.getItem('trc_owc_state');
+    const saved = window.safeStorage.getItem('trc_owc_state');
     if (!saved) return;
 
     try {
@@ -8900,8 +8899,8 @@ window.getTacticalContext = function (source = 'smart') {
     const hudZero = parseFloat(document.getElementById('owc-zero')?.value) || parseFloat(document.getElementById('zero')?.value) || 100;
     const hudBc = parseFloat(document.getElementById('owc-bc')?.value) || parseFloat(document.getElementById('g1')?.value) || 0.450;
 
-    const batches = JSON.parse(localStorage.getItem('trc_ammo_batches') || localStorage.getItem('ammoBatches') || '[]');
-    const activeBatchId = localStorage.getItem('trc_active_batch_id');
+    const batches = JSON.parse(window.safeStorage.getItem('trc_ammo_batches') || window.safeStorage.getItem('ammoBatches') || '[]');
+    const activeBatchId = window.safeStorage.getItem('trc_active_batch_id');
     const batch = batches.find(b => b.id.toString() === activeBatchId);
 
     if (source === 'batch' && batch) {
@@ -8964,7 +8963,7 @@ window.generateQuickDope = function () {
         if (typeof window.renderDropTable === 'function') {
             // Pass the full context to render so we have inclination/weather/profile data
             window.renderDropTable(data, context);
-            localStorage.setItem('trc_last_dope', JSON.stringify(data));
+            window.safeStorage.setItem('trc_last_dope', JSON.stringify(data));
         }
 
         // 4. Log
