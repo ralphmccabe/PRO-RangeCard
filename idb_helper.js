@@ -15,33 +15,44 @@ const idb = {
     db: null,
 
     async init() {
+        if (!window.indexedDB) {
+            console.error("[IDB] IndexedDB not supported.");
+            showDebug('CRITICAL: Your browser blocks IndexedDB (Storage).');
+            return null;
+        }
         if (this.db) return this.db;
         return new Promise((resolve, reject) => {
-            const request = indexedDB.open(DB_NAME, DB_VERSION);
+            try {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
 
-            request.onupgradeneeded = (event) => {
-                const db = event.target.result;
-                // Create stores if they don't exist
-                if (!db.objectStoreNames.contains(STORES.PROFILES)) {
-                    db.createObjectStore(STORES.PROFILES);
-                }
-                if (!db.objectStoreNames.contains(STORES.WEAPONS)) {
-                    db.createObjectStore(STORES.WEAPONS);
-                }
-            };
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORES.PROFILES)) {
+                        db.createObjectStore(STORES.PROFILES);
+                    }
+                    if (!db.objectStoreNames.contains(STORES.WEAPONS)) {
+                        db.createObjectStore(STORES.WEAPONS);
+                    }
+                };
 
-            request.onsuccess = (event) => {
-                this.db = event.target.result;
-                resolve(this.db);
-            };
+                request.onsuccess = (event) => {
+                    this.db = event.target.result;
+                    resolve(this.db);
+                };
 
-            request.onerror = (event) => {
-                const error = event.target.error;
-                console.error("[IDB] Database error:", error);
-                // Also log to a global error collection for debugging
-                window.IDB_CRITICAL_ERROR = error;
-                reject(error);
-            };
+                request.onerror = (event) => {
+                    const error = event.target.error;
+                    console.error("[IDB] Database error:", error);
+                    window.IDB_CRITICAL_ERROR = error;
+                    // Provide a clear message to the debugger
+                    if (window.showDebug) window.showDebug('IDB ERROR: Storage is blocked or denied.');
+                    reject(error);
+                };
+            } catch (e) {
+                console.error("[IDB] Initial open failed:", e);
+                if (window.showDebug) window.showDebug('IDB CRASH: ' + e.message);
+                reject(e);
+            }
         });
     },
 

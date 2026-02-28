@@ -1788,8 +1788,13 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("[SYS] Author: Ralph Mccabe");
         console.log("------------------------------------------");
         // 0. Perform IndexedDB Migration (One-time)
-        if (window.TRC_IDB) {
-            await window.TRC_IDB.migrateFromLocalStorage();
+        try {
+            if (window.TRC_IDB) {
+                await window.TRC_IDB.migrateFromLocalStorage();
+            }
+        } catch (e) {
+            console.error("[SYS] IDB Migration failed (likely blocked storage):", e);
+            if (window.showDebug) window.showDebug('NOTICE: Data Storage is currently blocked by browser.');
         }
 
         // 1. Initial Data Load (Ammo, Drills, etc.)
